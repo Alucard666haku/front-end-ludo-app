@@ -33,6 +33,7 @@
       grid-template-rows: repeat(15, 1fr);
       box-shadow: 0 10px 25px rgba(0,0,0,0.5);
       transition: transform 1s ease;
+      position: relative;
     }
 
     .cell {
@@ -49,12 +50,27 @@
     .path { background: #fff; }
 
     /* Maison centrale */
-    .center { background: #333; }
+    .center {
+      grid-column: 6 / 11;
+      grid-row: 6 / 11;
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+    }
+    .triangle {
+      width: 50%;
+      height: 50%;
+      clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%);
+    }
+    .triangle.red { background: #ff4d4d; clip-path: polygon(0 0, 100% 0, 50% 50%); }
+    .triangle.yellow { background: #ffcc00; clip-path: polygon(100% 0, 100% 100%, 50% 50%); }
+    .triangle.green { background: #4caf50; clip-path: polygon(0 100%, 100% 100%, 50% 50%); }
+    .triangle.blue { background: #2196f3; clip-path: polygon(0 0, 0 100%, 50% 50%); }
 
     /* Pions */
     .pawn {
-      width: 80%;
-      height: 80%;
+      width: 70%;
+      height: 70%;
       border-radius: 50%;
       margin: auto;
       box-shadow: 0 3px 6px rgba(0,0,0,0.5);
@@ -104,9 +120,14 @@
     <div class="cell blue-zone" style="grid-column: 11 / 16; grid-row: 11 / 16;"></div>
 
     <!-- Maison centrale -->
-    <div class="cell center" style="grid-column: 6 / 11; grid-row: 6 / 11;"></div>
+    <div class="center">
+      <div class="triangle red"></div>
+      <div class="triangle yellow"></div>
+      <div class="triangle green"></div>
+      <div class="triangle blue"></div>
+    </div>
 
-    <!-- Exemple de chemin (tu peux compléter tous les chemins) -->
+    <!-- Exemple de chemin complet (colonne centrale rouge) -->
     <div class="cell path" style="grid-column: 8; grid-row: 1;"></div>
     <div class="cell path" style="grid-column: 8; grid-row: 2;"></div>
     <div class="cell path" style="grid-column: 8; grid-row: 3;"></div>
