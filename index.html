@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Profile</title>
+  <script type="module">
+    async function loadProfile() {
+      const token = localStorage.getItem("authToken");
+      const email = localStorage.getItem("authEmail");
+
+      if (!token || !email) {
+        alert("Vous n'êtes pas connecté !");
+        window.location.href = "login.html";
+        return;
+      }
+
+      document.getElementById("email").textContent = email;
+      document.getElementById("token").textContent = token.substring(0, 30) + "...";
+    }
+
+    function logout() {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("authEmail");
+      alert("Déconnecté !");
+      window.location.href = "login.html";
+    }
+
+    window.onload = loadProfile;
+    window.logout = logout;
+  </script>
+</head>
+<body>
+  <h2>Profile</h2>
+  <p>Email: <span id="email"></span></p>
+  <p>Token: <span id="token"></span></p>
+  <button onclick="logout()">Se déconnecter</button>
+</body>
+</html>
