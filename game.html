@@ -4,156 +4,89 @@
   <meta charset="UTF-8">
   <title>Ludo Arena</title>
   <style>
+    :root {
+      --red:#e74c3c; --yellow:#f1c40f; --green:#2ecc71; --blue:#3498db;
+      --path:#fff; --line:#ccc;
+    }
     body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #ff4d4d, #ffcc00, #4caf50, #2196f3);
-      background-size: 400% 400%;
-      animation: gradientBG 12s ease infinite;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      margin:0; background:#111; font-family:Poppins,sans-serif;
+      display:flex; justify-content:center; align-items:center; height:100vh;
     }
-
-    @keyframes gradientBG {
-      0% {background-position: 0% 50%;}
-      50% {background-position: 100% 50%;}
-      100% {background-position: 0% 50%;}
+    .board {
+      width:600px; height:600px;
+      display:grid; grid-template-columns:repeat(15,1fr); grid-template-rows:repeat(15,1fr);
+      border:8px solid #333; border-radius:12px;
+      box-shadow:0 12px 30px rgba(0,0,0,.5);
+      transition:transform .8s ease;
     }
-
-    .arena {
-      width: 600px;
-      height: 600px;
-      background: #f0f0f0;
-      border: 10px solid #333;
-      border-radius: 20px;
-      display: grid;
-      grid-template-columns: repeat(15, 1fr);
-      grid-template-rows: repeat(15, 1fr);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-      transition: transform 1s ease;
-      position: relative;
-    }
-
-    .cell {
-      border: 1px solid rgba(0,0,0,0.1);
-    }
-
-    /* Zones de départ */
-    .red-zone { background: #ff4d4d; }
-    .yellow-zone { background: #ffcc00; }
-    .green-zone { background: #4caf50; }
-    .blue-zone { background: #2196f3; }
-
-    /* Chemins */
-    .path { background: #fff; }
-
-    /* Maison centrale */
-    .center {
-      grid-column: 6 / 11;
-      grid-row: 6 / 11;
-      position: relative;
-      display: flex;
-      flex-wrap: wrap;
-    }
-    .triangle {
-      width: 50%;
-      height: 50%;
-      clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%);
-    }
-    .triangle.red { background: #ff4d4d; clip-path: polygon(0 0, 100% 0, 50% 50%); }
-    .triangle.yellow { background: #ffcc00; clip-path: polygon(100% 0, 100% 100%, 50% 50%); }
-    .triangle.green { background: #4caf50; clip-path: polygon(0 100%, 100% 100%, 50% 50%); }
-    .triangle.blue { background: #2196f3; clip-path: polygon(0 0, 0 100%, 50% 50%); }
-
-    /* Pions */
-    .pawn {
-      width: 70%;
-      height: 70%;
-      border-radius: 50%;
-      margin: auto;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.5);
-    }
-    .pawn.red { background: #ff4d4d; }
-    .pawn.yellow { background: #ffcc00; }
-    .pawn.green { background: #4caf50; }
-    .pawn.blue { background: #2196f3; }
-
-    /* Vue perspective */
-    .perspective {
-      transform: rotateX(45deg) rotateZ(10deg) scale(0.9);
-    }
-
-    .controls {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-    }
-
-    button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 20px;
-      background: #333;
-      color: #fff;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    button:hover {
-      background: #ffcc00;
-      color: #000;
-    }
+    .board.perspective { transform:rotateX(45deg) scale(.92); transform-origin:50% 70%; }
+    .cell { border:1px solid var(--line); background:var(--path); }
+    /* Bases */
+    .base-red { grid-column:1/6; grid-row:1/6; background:var(--red); position:relative; }
+    .base-yellow { grid-column:11/16; grid-row:1/6; background:var(--yellow); position:relative; }
+    .base-green { grid-column:1/6; grid-row:11/16; background:var(--green); position:relative; }
+    .base-blue { grid-column:11/16; grid-row:11/16; background:var(--blue); position:relative; }
+    .spawn { position:absolute; width:28%; aspect-ratio:1; border-radius:50%; background:#fff;
+             border:4px solid rgba(0,0,0,.2); }
+    .base-red .spawn { border-color:var(--red); }
+    .base-yellow .spawn { border-color:var(--yellow); }
+    .base-green .spawn { border-color:var(--green); }
+    .base-blue .spawn { border-color:var(--blue); }
+    .s1{top:15%;left:15%}.s2{top:15%;right:15%}.s3{bottom:15%;left:15%}.s4{bottom:15%;right:15%}
+    /* Center home */
+    .center { grid-column:6/11; grid-row:6/11; position:relative; }
+    .tri { position:absolute; inset:0; }
+    .tri.red { clip-path:polygon(0 0,100% 0,50% 50%); background:var(--red); }
+    .tri.yellow { clip-path:polygon(100% 0,100% 100%,50% 50%); background:var(--yellow); }
+    .tri.green { clip-path:polygon(0 100%,100% 100%,50% 50%); background:var(--green); }
+    .tri.blue { clip-path:polygon(0 0,0 100%,50% 50%); background:var(--blue); }
+    /* Path lanes (example neutral + colored entry) */
+    .lane-red { background:var(--red); }
+    .lane-yellow { background:var(--yellow); }
+    .lane-green { background:var(--green); }
+    .lane-blue { background:var(--blue); }
+    /* Controls */
+    .controls { position:absolute; top:20px; right:20px; }
+    button { padding:8px 16px; border:none; border-radius:8px; background:#333; color:#fff; cursor:pointer; }
+    button:hover { background:#555; }
   </style>
 </head>
 <body>
   <div class="controls">
-    <button onclick="toggleView()">Changer Vue</button>
+    <button onclick="setView('2d')">Vue 2D</button>
+    <button onclick="setView('2_5d')">Vue 2.5D</button>
   </div>
 
-  <div id="arena" class="arena">
-    <!-- Zones de départ -->
-    <div class="cell red-zone" style="grid-column: 1 / 6; grid-row: 1 / 6;"></div>
-    <div class="cell yellow-zone" style="grid-column: 11 / 16; grid-row: 1 / 6;"></div>
-    <div class="cell green-zone" style="grid-column: 1 / 6; grid-row: 11 / 16;"></div>
-    <div class="cell blue-zone" style="grid-column: 11 / 16; grid-row: 11 / 16;"></div>
+  <div id="board" class="board">
+    <!-- Bases -->
+    <div class="base-red"><div class="spawn s1"></div><div class="spawn s2"></div><div class="spawn s3"></div><div class="spawn s4"></div></div>
+    <div class="base-yellow"><div class="spawn s1"></div><div class="spawn s2"></div><div class="spawn s3"></div><div class="spawn s4"></div></div>
+    <div class="base-green"><div class="spawn s1"></div><div class="spawn s2"></div><div class="spawn s3"></div><div class="spawn s4"></div></div>
+    <div class="base-blue"><div class="spawn s1"></div><div class="spawn s2"></div><div class="spawn s3"></div><div class="spawn s4"></div></div>
 
-    <!-- Maison centrale -->
+    <!-- Center -->
     <div class="center">
-      <div class="triangle red"></div>
-      <div class="triangle yellow"></div>
-      <div class="triangle green"></div>
-      <div class="triangle blue"></div>
+      <div class="tri red"></div>
+      <div class="tri yellow"></div>
+      <div class="tri green"></div>
+      <div class="tri blue"></div>
     </div>
 
-    <!-- Exemple de chemin complet (colonne centrale rouge) -->
-    <div class="cell path" style="grid-column: 8; grid-row: 1;"></div>
-    <div class="cell path" style="grid-column: 8; grid-row: 2;"></div>
-    <div class="cell path" style="grid-column: 8; grid-row: 3;"></div>
-    <div class="cell path" style="grid-column: 8; grid-row: 4;"></div>
-    <div class="cell path" style="grid-column: 8; grid-row: 5;"></div>
-    <div class="cell path" style="grid-column: 8; grid-row: 6;"></div>
-
-    <!-- Exemple de pions dans la base rouge -->
-    <div class="cell red-zone" style="grid-column: 2; grid-row: 2; display:flex; align-items:center; justify-content:center;">
-      <div class="pawn red"></div>
-    </div>
-    <div class="cell red-zone" style="grid-column: 4; grid-row: 2; display:flex; align-items:center; justify-content:center;">
-      <div class="pawn red"></div>
-    </div>
-    <div class="cell red-zone" style="grid-column: 2; grid-row: 4; display:flex; align-items:center; justify-content:center;">
-      <div class="pawn red"></div>
-    </div>
-    <div class="cell red-zone" style="grid-column: 4; grid-row: 4; display:flex; align-items:center; justify-content:center;">
-      <div class="pawn red"></div>
-    </div>
+    <!-- Example path cells (you compléter les 52 cases autour) -->
+    <div class="cell" style="grid-column:8;grid-row:1"></div>
+    <div class="cell" style="grid-column:8;grid-row:2"></div>
+    <div class="cell" style="grid-column:8;grid-row:3"></div>
+    <div class="cell" style="grid-column:8;grid-row:4"></div>
+    <div class="cell" style="grid-column:8;grid-row:5"></div>
+    <div class="cell lane-red" style="grid-column:8;grid-row:6"></div>
+    <!-- … répéter pour compléter le ring -->
   </div>
 
   <script>
-    function toggleView() {
-      const arena = document.getElementById("arena");
-      arena.classList.toggle("perspective");
+    function setView(mode){
+      const b=document.getElementById('board');
+      if(mode==='2d'){ b.classList.remove('perspective'); }
+      else{ b.classList.add('perspective'); }
     }
   </script>
 </body>
