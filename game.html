@@ -23,8 +23,8 @@
     }
 
     .arena {
-      width: 500px;
-      height: 500px;
+      width: 600px;
+      height: 600px;
       background: #f0f0f0;
       border: 10px solid #333;
       border-radius: 20px;
@@ -39,13 +39,36 @@
       border: 1px solid rgba(0,0,0,0.1);
     }
 
-    /* Couleurs des zones */
-    .red { background: #ff4d4d; }
-    .yellow { background: #ffcc00; }
-    .green { background: #4caf50; }
-    .blue { background: #2196f3; }
+    /* Zones de départ */
+    .red-zone { background: #ff4d4d; }
+    .yellow-zone { background: #ffcc00; }
+    .green-zone { background: #4caf50; }
+    .blue-zone { background: #2196f3; }
 
-    /* Bouton switch */
+    /* Chemins */
+    .path { background: #fff; }
+
+    /* Maison centrale */
+    .center { background: #333; }
+
+    /* Pions */
+    .pawn {
+      width: 80%;
+      height: 80%;
+      border-radius: 50%;
+      margin: auto;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+    }
+    .pawn.red { background: #ff4d4d; }
+    .pawn.yellow { background: #ffcc00; }
+    .pawn.green { background: #4caf50; }
+    .pawn.blue { background: #2196f3; }
+
+    /* Vue perspective */
+    .perspective {
+      transform: rotateX(45deg) rotateZ(10deg) scale(0.9);
+    }
+
     .controls {
       position: absolute;
       top: 20px;
@@ -66,11 +89,6 @@
       background: #ffcc00;
       color: #000;
     }
-
-    /* Vue perspective */
-    .perspective {
-      transform: rotateX(45deg) rotateZ(10deg) scale(0.9);
-    }
   </style>
 </head>
 <body>
@@ -79,12 +97,36 @@
   </div>
 
   <div id="arena" class="arena">
-    <!-- Exemple simplifié : coins colorés -->
-    <div class="cell red" style="grid-column: 1 / 6; grid-row: 1 / 6;"></div>
-    <div class="cell yellow" style="grid-column: 11 / 16; grid-row: 1 / 6;"></div>
-    <div class="cell green" style="grid-column: 1 / 6; grid-row: 11 / 16;"></div>
-    <div class="cell blue" style="grid-column: 11 / 16; grid-row: 11 / 16;"></div>
-    <!-- Le reste du plateau peut être dessiné avec des cases neutres -->
+    <!-- Zones de départ -->
+    <div class="cell red-zone" style="grid-column: 1 / 6; grid-row: 1 / 6;"></div>
+    <div class="cell yellow-zone" style="grid-column: 11 / 16; grid-row: 1 / 6;"></div>
+    <div class="cell green-zone" style="grid-column: 1 / 6; grid-row: 11 / 16;"></div>
+    <div class="cell blue-zone" style="grid-column: 11 / 16; grid-row: 11 / 16;"></div>
+
+    <!-- Maison centrale -->
+    <div class="cell center" style="grid-column: 6 / 11; grid-row: 6 / 11;"></div>
+
+    <!-- Exemple de chemin (tu peux compléter tous les chemins) -->
+    <div class="cell path" style="grid-column: 8; grid-row: 1;"></div>
+    <div class="cell path" style="grid-column: 8; grid-row: 2;"></div>
+    <div class="cell path" style="grid-column: 8; grid-row: 3;"></div>
+    <div class="cell path" style="grid-column: 8; grid-row: 4;"></div>
+    <div class="cell path" style="grid-column: 8; grid-row: 5;"></div>
+    <div class="cell path" style="grid-column: 8; grid-row: 6;"></div>
+
+    <!-- Exemple de pions dans la base rouge -->
+    <div class="cell red-zone" style="grid-column: 2; grid-row: 2; display:flex; align-items:center; justify-content:center;">
+      <div class="pawn red"></div>
+    </div>
+    <div class="cell red-zone" style="grid-column: 4; grid-row: 2; display:flex; align-items:center; justify-content:center;">
+      <div class="pawn red"></div>
+    </div>
+    <div class="cell red-zone" style="grid-column: 2; grid-row: 4; display:flex; align-items:center; justify-content:center;">
+      <div class="pawn red"></div>
+    </div>
+    <div class="cell red-zone" style="grid-column: 4; grid-row: 4; display:flex; align-items:center; justify-content:center;">
+      <div class="pawn red"></div>
+    </div>
   </div>
 
   <script>
