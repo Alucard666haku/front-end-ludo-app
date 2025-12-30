@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Ludo Arena</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #ff4d4d, #ffcc00, #4caf50, #2196f3);
+      background-size: 400% 400%;
+      animation: gradientBG 12s ease infinite;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    @keyframes gradientBG {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+
+    .arena {
+      width: 500px;
+      height: 500px;
+      background: #f0f0f0;
+      border: 10px solid #333;
+      border-radius: 20px;
+      display: grid;
+      grid-template-columns: repeat(15, 1fr);
+      grid-template-rows: repeat(15, 1fr);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      transition: transform 1s ease;
+    }
+
+    .cell {
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    /* Couleurs des zones */
+    .red { background: #ff4d4d; }
+    .yellow { background: #ffcc00; }
+    .green { background: #4caf50; }
+    .blue { background: #2196f3; }
+
+    /* Bouton switch */
+    .controls {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 20px;
+      background: #333;
+      color: #fff;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #ffcc00;
+      color: #000;
+    }
+
+    /* Vue perspective */
+    .perspective {
+      transform: rotateX(45deg) rotateZ(10deg) scale(0.9);
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <button onclick="toggleView()">Changer Vue</button>
+  </div>
+
+  <div id="arena" class="arena">
+    <!-- Exemple simplifié : coins colorés -->
+    <div class="cell red" style="grid-column: 1 / 6; grid-row: 1 / 6;"></div>
+    <div class="cell yellow" style="grid-column: 11 / 16; grid-row: 1 / 6;"></div>
+    <div class="cell green" style="grid-column: 1 / 6; grid-row: 11 / 16;"></div>
+    <div class="cell blue" style="grid-column: 11 / 16; grid-row: 11 / 16;"></div>
+    <!-- Le reste du plateau peut être dessiné avec des cases neutres -->
+  </div>
+
+  <script>
+    function toggleView() {
+      const arena = document.getElementById("arena");
+      arena.classList.toggle("perspective");
+    }
+  </script>
+</body>
+</html>
