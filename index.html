@@ -1,7 +1,94 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-  <title>Profile</title>
+  <meta charset="UTF-8">
+  <title>Profil - Ludo Game</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #ff4d4d, #ffcc00, #4caf50, #2196f3);
+      background-size: 400% 400%;
+      animation: gradientBG 12s ease infinite;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    @keyframes gradientBG {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+
+    .profile-card {
+      background: rgba(0,0,0,0.7);
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      width: 400px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      animation: fadeIn 1.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
+    .profile-card h1 {
+      margin: 0;
+      font-size: 2em;
+      color: #ffcc00;
+      text-shadow: 2px 2px #000;
+    }
+
+    .profile-card p {
+      margin: 10px 0;
+      font-size: 1.1em;
+    }
+
+    .token-box {
+      background: rgba(255,255,255,0.1);
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 0.9em;
+      word-break: break-word;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 30px;
+      background: #ff4d4d;
+      color: #fff;
+      font-size: 1em;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #ffcc00;
+      color: #000;
+    }
+
+    .ludo-pawn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      margin: 10px;
+      display: inline-block;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    }
+
+    .red { background: #ff4d4d; }
+    .yellow { background: #ffcc00; }
+    .green { background: #4caf50; }
+    .blue { background: #2196f3; }
+  </style>
   <script type="module">
     async function loadProfile() {
       const token = localStorage.getItem("authToken");
@@ -14,7 +101,7 @@
       }
 
       document.getElementById("email").textContent = email;
-      document.getElementById("token").textContent = token.substring(0, 30) + "...";
+      document.getElementById("token").textContent = token.substring(0, 50) + "...";
     }
 
     function logout() {
@@ -29,9 +116,20 @@
   </script>
 </head>
 <body>
-  <h2>Profile</h2>
-  <p>Email: <span id="email"></span></p>
-  <p>Token: <span id="token"></span></p>
-  <button onclick="logout()">Se déconnecter</button>
+  <div class="profile-card">
+    <h1>🎲 Profil Joueur</h1>
+    <p><strong>Email :</strong> <span id="email"></span></p>
+    <p><strong>Token :</strong></p>
+    <div class="token-box" id="token"></div>
+
+    <div style="margin-top:20px;">
+      <div class="ludo-pawn red"></div>
+      <div class="ludo-pawn yellow"></div>
+      <div class="ludo-pawn green"></div>
+      <div class="ludo-pawn blue"></div>
+    </div>
+
+    <button onclick="logout()">🚪 Déconnexion</button>
+  </div>
 </body>
 </html>
