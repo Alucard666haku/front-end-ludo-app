@@ -1,0 +1,281 @@
+/* ===== VARIABLES CSS ===== */
+:root {
+  --red: #e74c3c;
+  --yellow: #f1c40f;
+  --green: #27ae60;
+  --blue: #3498db;
+  --path: #f8f9fa;
+  --line: #dee2e6;
+  --board-bg: #ecf0f1;
+}
+
+/* ===== RESET & BASE ===== */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  perspective: 1000px;
+}
+
+/* ===== TITRE ===== */
+.title {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  color: white;
+  font-size: 28px;
+  font-weight: 600;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.title span {
+  background: linear-gradient(90deg, var(--red), var(--yellow), var(--green), var(--blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ===== CONTRÔLES ===== */
+.controls {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 100;
+}
+
+button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+button.active {
+  background: linear-gradient(135deg, #11998e, #38ef7d);
+}
+
+/* ===== CONTENEUR DU PLATEAU ===== */
+.board-container {
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.board-container.perspective-view {
+  transform: rotateX(55deg) rotateZ(-5deg) scale(0.85);
+}
+
+/* ===== PLATEAU DE JEU ===== */
+.board {
+  width: 600px;
+  height: 600px;
+  display: grid;
+  grid-template-columns: repeat(15, 1fr);
+  grid-template-rows: repeat(15, 1fr);
+  background: var(--board-bg);
+  border: 6px solid #2c3e50;
+  border-radius: 16px;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    inset 0 0 20px rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.board-container.perspective-view .board {
+  box-shadow: 
+    0 40px 80px rgba(0, 0, 0, 0.6),
+    0 0 0 6px #1a252f;
+}
+
+/* ===== CELLULES DU CHEMIN ===== */
+.cell {
+  border: 1px solid var(--line);
+  background: var(--path);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  transition: background 0.2s;
+}
+
+.cell:hover {
+  background: #e8e8e8;
+}
+
+/* Cases départ (étoiles) */
+.cell.start::after {
+  content: "★";
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.3);
+}
+
+/* Cases sécurisées */
+.cell.safe::after {
+  content: "●";
+  font-size: 10px;
+  color: rgba(0, 0, 0, 0.2);
+}
+
+/* ===== BASES DES JOUEURS ===== */
+.base {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  padding: 10%;
+  border-radius: 12px;
+}
+
+.base-red {
+  grid-column: 1 / 7;
+  grid-row: 1 / 7;
+  background: linear-gradient(135deg, var(--red), #c0392b);
+}
+
+.base-yellow {
+  grid-column: 10 / 16;
+  grid-row: 1 / 7;
+  background: linear-gradient(135deg, var(--yellow), #f39c12);
+}
+
+.base-green {
+  grid-column: 1 / 7;
+  grid-row: 10 / 16;
+  background: linear-gradient(135deg, var(--green), #1e8449);
+}
+
+.base-blue {
+  grid-column: 10 / 16;
+  grid-row: 10 / 16;
+  background: linear-gradient(135deg, var(--blue), #2980b9);
+}
+
+/* Zone intérieure des bases */
+.base-inner {
+  width: 75%;
+  height: 75%;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 12%;
+  padding: 12%;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Spots de spawn */
+.spawn {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #fff;
+  border: 4px solid;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.base-red .spawn { border-color: var(--red); }
+.base-yellow .spawn { border-color: var(--yellow); }
+.base-green .spawn { border-color: var(--green); }
+.base-blue .spawn { border-color: var(--blue); }
+
+/* ===== CENTRE (MAISON D'ARRIVÉE) ===== */
+.center {
+  grid-column: 7 / 10;
+  grid-row: 7 / 10;
+  position: relative;
+  overflow: hidden;
+}
+
+.tri {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.tri.red {
+  clip-path: polygon(0 0, 100% 0, 50% 50%);
+  background: linear-gradient(180deg, var(--red), #c0392b);
+}
+
+.tri.blue {
+  clip-path: polygon(0 0, 0 100%, 50% 50%);
+  background: linear-gradient(90deg, var(--blue), #2980b9);
+}
+
+.tri.green {
+  clip-path: polygon(0 100%, 100% 100%, 50% 50%);
+  background: linear-gradient(0deg, var(--green), #1e8449);
+}
+
+.tri.yellow {
+  clip-path: polygon(100% 0, 100% 100%, 50% 50%);
+  background: linear-gradient(-90deg, var(--yellow), #f39c12);
+}
+
+.center-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 30%;
+  height: 30%;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+/* ===== COULOIRS COLORÉS ===== */
+.lane-red { 
+  background: linear-gradient(90deg, #ffcccc, var(--red)) !important; 
+}
+
+.lane-yellow { 
+  background: linear-gradient(-90deg, #fff5cc, var(--yellow)) !important; 
+}
+
+.lane-green { 
+  background: linear-gradient(90deg, #ccffcc, var(--green)) !important; 
+}
+
+.lane-blue { 
+  background: linear-gradient(-90deg, #cce5ff, var(--blue)) !important; 
+}
+
+/* ===== POINTS D'ENTRÉE ===== */
+.entry-red { background: var(--red) !important; }
+.entry-yellow { background: var(--yellow) !important; }
+.entry-green { background: var(--green) !important; }
+.entry-blue { background: var(--blue) !important; }
+
+.entry-red::after,
+.entry-yellow::after,
+.entry-green::after,
+.entry-blue::after {
+  content: "▶";
+  font-size: 12px;
+  color: white;
+}
