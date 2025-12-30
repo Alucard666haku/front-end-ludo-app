@@ -2,91 +2,427 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ludo Arena</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --red:#e74c3c; --yellow:#f1c40f; --green:#2ecc71; --blue:#3498db;
-      --path:#fff; --line:#ccc;
+      --red: #e74c3c;
+      --yellow: #f1c40f;
+      --green: #27ae60;
+      --blue: #3498db;
+      --path: #f8f9fa;
+      --line: #dee2e6;
+      --board-bg: #ecf0f1;
     }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      margin:0; background:#111; font-family:Poppins,sans-serif;
-      display:flex; justify-content:center; align-items:center; height:100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      perspective: 1000px;
     }
+
+    .controls {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 25px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+
+    button.active {
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+    }
+
+    .board-container {
+      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+    }
+
+    .board-container.perspective-view {
+      transform: rotateX(55deg) rotateZ(-5deg) scale(0.85);
+    }
+
     .board {
-      width:600px; height:600px;
-      display:grid; grid-template-columns:repeat(15,1fr); grid-template-rows:repeat(15,1fr);
-      border:8px solid #333; border-radius:12px;
-      box-shadow:0 12px 30px rgba(0,0,0,.5);
-      transition:transform .8s ease;
+      width: 600px;
+      height: 600px;
+      display: grid;
+      grid-template-columns: repeat(15, 1fr);
+      grid-template-rows: repeat(15, 1fr);
+      background: var(--board-bg);
+      border: 6px solid #2c3e50;
+      border-radius: 16px;
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        inset 0 0 20px rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
     }
-    .board.perspective { transform:rotateX(45deg) scale(.92); transform-origin:50% 70%; }
-    .cell { border:1px solid var(--line); background:var(--path); }
-    /* Bases */
-    .base-red { grid-column:1/6; grid-row:1/6; background:var(--red); position:relative; }
-    .base-yellow { grid-column:11/16; grid-row:1/6; background:var(--yellow); position:relative; }
-    .base-green { grid-column:1/6; grid-row:11/16; background:var(--green); position:relative; }
-    .base-blue { grid-column:11/16; grid-row:11/16; background:var(--blue); position:relative; }
-    .spawn { position:absolute; width:28%; aspect-ratio:1; border-radius:50%; background:#fff;
-             border:4px solid rgba(0,0,0,.2); }
-    .base-red .spawn { border-color:var(--red); }
-    .base-yellow .spawn { border-color:var(--yellow); }
-    .base-green .spawn { border-color:var(--green); }
-    .base-blue .spawn { border-color:var(--blue); }
-    .s1{top:15%;left:15%}.s2{top:15%;right:15%}.s3{bottom:15%;left:15%}.s4{bottom:15%;right:15%}
-    /* Center home */
-    .center { grid-column:6/11; grid-row:6/11; position:relative; }
-    .tri { position:absolute; inset:0; }
-    .tri.red { clip-path:polygon(0 0,100% 0,50% 50%); background:var(--red); }
-    .tri.yellow { clip-path:polygon(100% 0,100% 100%,50% 50%); background:var(--yellow); }
-    .tri.green { clip-path:polygon(0 100%,100% 100%,50% 50%); background:var(--green); }
-    .tri.blue { clip-path:polygon(0 0,0 100%,50% 50%); background:var(--blue); }
-    /* Path lanes (example neutral + colored entry) */
-    .lane-red { background:var(--red); }
-    .lane-yellow { background:var(--yellow); }
-    .lane-green { background:var(--green); }
-    .lane-blue { background:var(--blue); }
-    /* Controls */
-    .controls { position:absolute; top:20px; right:20px; }
-    button { padding:8px 16px; border:none; border-radius:8px; background:#333; color:#fff; cursor:pointer; }
-    button:hover { background:#555; }
+
+    .board-container.perspective-view .board {
+      box-shadow: 
+        0 40px 80px rgba(0, 0, 0, 0.6),
+        0 0 0 6px #1a252f;
+    }
+
+    .cell {
+      border: 1px solid var(--line);
+      background: var(--path);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      transition: background 0.2s;
+    }
+
+    .cell:hover {
+      background: #e8e8e8;
+    }
+
+    /* Cases départ (étoiles) */
+    .cell.start::after {
+      content: "★";
+      font-size: 16px;
+      color: rgba(0, 0, 0, 0.3);
+    }
+
+    /* Cases sécurisées */
+    .cell.safe::after {
+      content: "●";
+      font-size: 10px;
+      color: rgba(0, 0, 0, 0.2);
+    }
+
+    /* Bases des joueurs */
+    .base {
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      padding: 10%;
+      border-radius: 12px;
+    }
+
+    .base-red {
+      grid-column: 1 / 7;
+      grid-row: 1 / 7;
+      background: linear-gradient(135deg, var(--red), #c0392b);
+    }
+
+    .base-yellow {
+      grid-column: 10 / 16;
+      grid-row: 1 / 7;
+      background: linear-gradient(135deg, var(--yellow), #f39c12);
+    }
+
+    .base-green {
+      grid-column: 1 / 7;
+      grid-row: 10 / 16;
+      background: linear-gradient(135deg, var(--green), #1e8449);
+    }
+
+    .base-blue {
+      grid-column: 10 / 16;
+      grid-row: 10 / 16;
+      background: linear-gradient(135deg, var(--blue), #2980b9);
+    }
+
+    .base-inner {
+      width: 75%;
+      height: 75%;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 12%;
+      padding: 12%;
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .spawn {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #fff;
+      border: 4px solid;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .base-red .spawn { border-color: var(--red); }
+    .base-yellow .spawn { border-color: var(--yellow); }
+    .base-green .spawn { border-color: var(--green); }
+    .base-blue .spawn { border-color: var(--blue); }
+
+    /* Centre (maison d'arrivée) */
+    .center {
+      grid-column: 7 / 10;
+      grid-row: 7 / 10;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tri {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    .tri.red {
+      clip-path: polygon(0 0, 100% 0, 50% 50%);
+      background: linear-gradient(180deg, var(--red), #c0392b);
+    }
+
+    .tri.blue {
+      clip-path: polygon(0 0, 0 100%, 50% 50%);
+      background: linear-gradient(90deg, var(--blue), #2980b9);
+    }
+
+    .tri.green {
+      clip-path: polygon(0 100%, 100% 100%, 50% 50%);
+      background: linear-gradient(0deg, var(--green), #1e8449);
+    }
+
+    .tri.yellow {
+      clip-path: polygon(100% 0, 100% 100%, 50% 50%);
+      background: linear-gradient(-90deg, var(--yellow), #f39c12);
+    }
+
+    .center-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 30%;
+      height: 30%;
+      background: white;
+      border-radius: 50%;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      z-index: 10;
+    }
+
+    /* Couloirs colorés vers le centre */
+    .lane-red { background: linear-gradient(90deg, #ffcccc, var(--red)) !important; }
+    .lane-yellow { background: linear-gradient(-90deg, #fff5cc, var(--yellow)) !important; }
+    .lane-green { background: linear-gradient(90deg, #ccffcc, var(--green)) !important; }
+    .lane-blue { background: linear-gradient(-90deg, #cce5ff, var(--blue)) !important; }
+
+    /* Points d'entrée */
+    .entry-red { background: var(--red) !important; }
+    .entry-yellow { background: var(--yellow) !important; }
+    .entry-green { background: var(--green) !important; }
+    .entry-blue { background: var(--blue) !important; }
+
+    .entry-red::after,
+    .entry-yellow::after,
+    .entry-green::after,
+    .entry-blue::after {
+      content: "▶";
+      font-size: 12px;
+      color: white;
+    }
+
+    /* Titre */
+    .title {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      color: white;
+      font-size: 28px;
+      font-weight: 600;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .title span {
+      background: linear-gradient(90deg, var(--red), var(--yellow), var(--green), var(--blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
   </style>
 </head>
 <body>
+
+  <div class="title">🎲 <span>Ludo Arena</span></div>
+
   <div class="controls">
-    <button onclick="setView('2d')">Vue 2D</button>
-    <button onclick="setView('2_5d')">Vue 2.5D</button>
+    <button id="btn2d" class="active" onclick="setView('2d')">Vue 2D</button>
+    <button id="btn25d" onclick="setView('2.5d')">Vue 2.5D</button>
   </div>
 
-  <div id="board" class="board">
-    <!-- Bases -->
-    <div class="base-red"><div class="spawn s1"></div><div class="spawn s2"></div><div class="spawn s3"></div><div class="spawn s4"></div></div>
-    <div class="base-yellow"><div class="spawn s1"></div><div class="spawn s2"></div><div class="spawn s3"></div><div class="spawn s4"></div></div>
-    <div class="base-green"><div class="spawn s1"></div><div class="spawn s2"></div><div class="spawn s3"></div><div class="spawn s4"></div></div>
-    <div class="base-blue"><div class="spawn s1"></div><div class="spawn s2"></div><div class="spawn s3"></div><div class="spawn s4"></div></div>
+  <div id="boardContainer" class="board-container">
+    <div id="board" class="board"></div>
+  </div>
 
-    <!-- Center -->
-    <div class="center">
+  <script>
+    const board = document.getElementById('board');
+
+    // Fonction pour créer une cellule
+    function createCell(col, row, classes = '', content = '') {
+      const cell = document.createElement('div');
+      cell.className = `cell ${classes}`;
+      cell.style.gridColumn = col;
+      cell.style.gridRow = row;
+      if (content) cell.innerHTML = content;
+      return cell;
+    }
+
+    // Fonction pour créer une base
+    function createBase(color) {
+      const base = document.createElement('div');
+      base.className = `base base-${color}`;
+      
+      const inner = document.createElement('div');
+      inner.className = 'base-inner';
+      
+      for (let i = 0; i < 4; i++) {
+        const spawn = document.createElement('div');
+        spawn.className = 'spawn';
+        inner.appendChild(spawn);
+      }
+      
+      base.appendChild(inner);
+      return base;
+    }
+
+    // Créer les 4 bases
+    board.appendChild(createBase('red'));
+    board.appendChild(createBase('yellow'));
+    board.appendChild(createBase('green'));
+    board.appendChild(createBase('blue'));
+
+    // Créer le centre
+    const center = document.createElement('div');
+    center.className = 'center';
+    center.innerHTML = `
       <div class="tri red"></div>
       <div class="tri yellow"></div>
       <div class="tri green"></div>
       <div class="tri blue"></div>
-    </div>
+      <div class="center-circle"></div>
+    `;
+    board.appendChild(center);
 
-    <!-- Example path cells (you compléter les 52 cases autour) -->
-    <div class="cell" style="grid-column:8;grid-row:1"></div>
-    <div class="cell" style="grid-column:8;grid-row:2"></div>
-    <div class="cell" style="grid-column:8;grid-row:3"></div>
-    <div class="cell" style="grid-column:8;grid-row:4"></div>
-    <div class="cell" style="grid-column:8;grid-row:5"></div>
-    <div class="cell lane-red" style="grid-column:8;grid-row:6"></div>
-    <!-- … répéter pour compléter le ring -->
-  </div>
+    // ===== CHEMIN PRINCIPAL (52 cases) =====
+    
+    // Haut vertical (colonne 7) - de haut en bas
+    for (let r = 1; r <= 6; r++) {
+      let cls = r === 2 ? 'start entry-red' : '';
+      board.appendChild(createCell(7, r, cls));
+    }
+    
+    // Haut vertical (colonne 9) - de bas en haut  
+    for (let r = 6; r >= 1; r--) {
+      board.appendChild(createCell(9, r));
+    }
+    
+    // Haut horizontal (ligne 7) - vers la gauche
+    for (let c = 6; c >= 1; c--) {
+      board.appendChild(createCell(c, 7));
+    }
+    
+    // Haut horizontal (ligne 9) - vers la droite
+    for (let c = 1; c <= 6; c++) {
+      let cls = c === 2 ? 'start entry-green' : '';
+      board.appendChild(createCell(c, 9, cls));
+    }
+    
+    // Bas vertical (colonne 7) - de haut en bas
+    for (let r = 10; r <= 15; r++) {
+      board.appendChild(createCell(7, r));
+    }
+    
+    // Bas vertical (colonne 9) - de bas en haut
+    for (let r = 15; r >= 10; r--) {
+      let cls = r === 14 ? 'start entry-blue' : '';
+      board.appendChild(createCell(9, r, cls));
+    }
+    
+    // Bas horizontal (ligne 7) - vers la droite
+    for (let c = 10; c <= 15; c++) {
+      let cls = c === 14 ? 'start entry-yellow' : '';
+      board.appendChild(createCell(c, 7, cls));
+    }
+    
+    // Bas horizontal (ligne 9) - vers la gauche
+    for (let c = 15; c >= 10; c--) {
+      board.appendChild(createCell(c, 9));
+    }
 
-  <script>
-    function setView(mode){
-      const b=document.getElementById('board');
-      if(mode==='2d'){ b.classList.remove('perspective'); }
-      else{ b.classList.add('perspective'); }
+    // ===== COULOIRS COLORÉS VERS LE CENTRE =====
+    
+    // Couloir ROUGE (ligne 8, de col 2 à 6)
+    for (let c = 2; c <= 6; c++) {
+      board.appendChild(createCell(c, 8, 'lane-red'));
+    }
+    
+    // Couloir JAUNE (ligne 8, de col 10 à 14)
+    for (let c = 10; c <= 14; c++) {
+      board.appendChild(createCell(c, 8, 'lane-yellow'));
+    }
+    
+    // Couloir VERT (colonne 8, de ligne 10 à 14)
+    for (let r = 10; r <= 14; r++) {
+      board.appendChild(createCell(8, r, 'lane-green'));
+    }
+    
+    // Couloir BLEU (colonne 8, de ligne 2 à 6)
+    for (let r = 2; r <= 6; r++) {
+      board.appendChild(createCell(8, r, 'lane-blue'));
+    }
+
+    // Cases aux coins des couloirs (ligne 8 col 1 et 15)
+    board.appendChild(createCell(1, 8));
+    board.appendChild(createCell(15, 8));
+    
+    // Cases aux coins des couloirs (col 8 ligne 1 et 15)
+    board.appendChild(createCell(8, 1));
+    board.appendChild(createCell(8, 15));
+
+    // ===== GESTION DES VUES =====
+    function setView(mode) {
+      const container = document.getElementById('boardContainer');
+      const btn2d = document.getElementById('btn2d');
+      const btn25d = document.getElementById('btn25d');
+      
+      if (mode === '2d') {
+        container.classList.remove('perspective-view');
+        btn2d.classList.add('active');
+        btn25d.classList.remove('active');
+      } else {
+        container.classList.add('perspective-view');
+        btn25d.classList.add('active');
+        btn2d.classList.remove('active');
+      }
     }
   </script>
 </body>
