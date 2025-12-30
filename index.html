@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Profil - Ludo Game</title>
+  <title>Dashboard - Ludo Game</title>
   <style>
     body {
       margin: 0;
@@ -11,10 +11,6 @@
       background-size: 400% 400%;
       animation: gradientBG 12s ease infinite;
       color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
     }
 
     @keyframes gradientBG {
@@ -23,43 +19,65 @@
       100% {background-position: 0% 50%;}
     }
 
-    .profile-card {
+    .dashboard {
+      max-width: 900px;
+      margin: 50px auto;
       background: rgba(0,0,0,0.7);
-      padding: 40px;
       border-radius: 20px;
-      text-align: center;
-      width: 400px;
+      padding: 30px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-      animation: fadeIn 1.5s ease;
     }
 
-    @keyframes fadeIn {
-      from {opacity: 0; transform: translateY(20px);}
-      to {opacity: 1; transform: translateY(0);}
-    }
-
-    .profile-card h1 {
-      margin: 0;
-      font-size: 2em;
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
       color: #ffcc00;
       text-shadow: 2px 2px #000;
     }
 
-    .profile-card p {
-      margin: 10px 0;
-      font-size: 1.1em;
+    .section {
+      margin-bottom: 30px;
     }
 
-    .token-box {
-      background: rgba(255,255,255,0.1);
-      padding: 10px;
+    .section h2 {
+      border-bottom: 2px solid rgba(255,255,255,0.2);
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+      font-size: 1.4em;
+      color: #fff;
+    }
+
+    .match-history, .ladder {
+      background: rgba(255,255,255,0.05);
       border-radius: 10px;
-      font-size: 0.9em;
-      word-break: break-word;
+      padding: 15px;
+    }
+
+    .match {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .match:last-child {
+      border-bottom: none;
+    }
+
+    .ladder-entry {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .ladder-entry:last-child {
+      border-bottom: none;
     }
 
     button {
-      margin-top: 20px;
+      display: block;
+      margin: 20px auto 0;
       padding: 12px 25px;
       border: none;
       border-radius: 30px;
@@ -74,23 +92,9 @@
       background: #ffcc00;
       color: #000;
     }
-
-    .ludo-pawn {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      margin: 10px;
-      display: inline-block;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    }
-
-    .red { background: #ff4d4d; }
-    .yellow { background: #ffcc00; }
-    .green { background: #4caf50; }
-    .blue { background: #2196f3; }
   </style>
   <script type="module">
-    async function loadProfile() {
+    async function loadDashboard() {
       const token = localStorage.getItem("authToken");
       const email = localStorage.getItem("authEmail");
 
@@ -100,8 +104,36 @@
         return;
       }
 
-      document.getElementById("email").textContent = email;
-      document.getElementById("token").textContent = token.substring(0, 50) + "...";
+      document.getElementById("playerEmail").textContent = email;
+
+      // Exemple statique (à remplacer par des appels backend)
+      const matches = [
+        { opponent: "PlayerX", result: "Victoire", date: "28/12/2025" },
+        { opponent: "PlayerY", result: "Défaite", date: "27/12/2025" },
+        { opponent: "PlayerZ", result: "Victoire", date: "26/12/2025" }
+      ];
+
+      const ladder = [
+        { rank: 1, player: "PlayerX", points: 1200 },
+        { rank: 2, player: email, points: 1150 },
+        { rank: 3, player: "PlayerY", points: 1100 }
+      ];
+
+      const matchContainer = document.getElementById("matchHistory");
+      matches.forEach(m => {
+        const div = document.createElement("div");
+        div.className = "match";
+        div.innerHTML = `<span>${m.date}</span><span>${m.opponent}</span><span>${m.result}</span>`;
+        matchContainer.appendChild(div);
+      });
+
+      const ladderContainer = document.getElementById("ladder");
+      ladder.forEach(l => {
+        const div = document.createElement("div");
+        div.className = "ladder-entry";
+        div.innerHTML = `<span>#${l.rank}</span><span>${l.player}</span><span>${l.points} pts</span>`;
+        ladderContainer.appendChild(div);
+      });
     }
 
     function logout() {
@@ -111,22 +143,23 @@
       window.location.href = "login.html";
     }
 
-    window.onload = loadProfile;
+    window.onload = loadDashboard;
     window.logout = logout;
   </script>
 </head>
 <body>
-  <div class="profile-card">
-    <h1>🎲 Profil Joueur</h1>
-    <p><strong>Email :</strong> <span id="email"></span></p>
-    <p><strong>Token :</strong></p>
-    <div class="token-box" id="token"></div>
+  <div class="dashboard">
+    <h1>🎲 Ludo Dashboard</h1>
+    <p style="text-align:center;">Connecté en tant que <strong id="playerEmail"></strong></p>
 
-    <div style="margin-top:20px;">
-      <div class="ludo-pawn red"></div>
-      <div class="ludo-pawn yellow"></div>
-      <div class="ludo-pawn green"></div>
-      <div class="ludo-pawn blue"></div>
+    <div class="section">
+      <h2>Match History</h2>
+      <div class="match-history" id="matchHistory"></div>
+    </div>
+
+    <div class="section">
+      <h2>Ladder</h2>
+      <div class="ladder" id="ladder"></div>
     </div>
 
     <button onclick="logout()">🚪 Déconnexion</button>
