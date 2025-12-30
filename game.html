@@ -7,28 +7,29 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --red: #e74c3c;
-      --yellow: #f1c40f;
-      --green: #27ae60;
-      --blue: #3498db;
-      --path: #f8f9fa;
-      --line: #dee2e6;
-      --board-bg: #ecf0f1;
+      --red: #e53935;
+      --green: #43a047;
+      --blue: #1e88e5;
+      --yellow: #fdd835;
+      --pink-bg: #f8e1f4;
+      --cell-bg: #fffde7;
     }
 
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      margin: 0;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      background: linear-gradient(135deg, #00ff88, #00cc66);
       font-family: 'Poppins', sans-serif;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      perspective: 1000px;
+      padding: 20px;
     }
 
     .controls {
@@ -50,16 +51,27 @@
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
 
     button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
     }
 
     button.active {
       background: linear-gradient(135deg, #11998e, #38ef7d);
+    }
+
+    .title {
+      color: white;
+      font-size: 32px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .board-wrapper {
+      perspective: 1200px;
     }
 
     .board-container {
@@ -68,7 +80,7 @@
     }
 
     .board-container.perspective-view {
-      transform: rotateX(55deg) rotateZ(-5deg) scale(0.85);
+      transform: rotateX(50deg) rotateZ(0deg) scale(0.9);
     }
 
     .board {
@@ -77,226 +89,244 @@
       display: grid;
       grid-template-columns: repeat(15, 1fr);
       grid-template-rows: repeat(15, 1fr);
-      background: var(--board-bg);
-      border: 6px solid #2c3e50;
+      background: var(--pink-bg);
+      border: 8px solid #4ade80;
       border-radius: 16px;
       box-shadow: 
-        0 20px 60px rgba(0, 0, 0, 0.5),
-        inset 0 0 20px rgba(255, 255, 255, 0.1);
-      position: relative;
+        0 20px 60px rgba(0, 0, 0, 0.4),
+        inset 0 0 30px rgba(255, 255, 255, 0.5);
       overflow: hidden;
     }
 
     .board-container.perspective-view .board {
       box-shadow: 
-        0 40px 80px rgba(0, 0, 0, 0.6),
-        0 0 0 6px #1a252f;
+        0 60px 100px rgba(0, 0, 0, 0.5),
+        inset 0 0 30px rgba(255, 255, 255, 0.3);
     }
 
+    /* ===== CELLULES DU CHEMIN ===== */
     .cell {
-      border: 1px solid var(--line);
-      background: var(--path);
+      background: var(--cell-bg);
+      border: 1px solid #b3e5fc;
       display: flex;
       justify-content: center;
       align-items: center;
-      position: relative;
-      transition: background 0.2s;
+      transition: all 0.2s;
     }
 
     .cell:hover {
-      background: #e8e8e8;
+      filter: brightness(0.95);
     }
 
-    /* Cases départ (étoiles) */
-    .cell.start::after {
-      content: "★";
-      font-size: 16px;
-      color: rgba(0, 0, 0, 0.3);
-    }
-
-    /* Cases sécurisées */
-    .cell.safe::after {
-      content: "●";
-      font-size: 10px;
-      color: rgba(0, 0, 0, 0.2);
-    }
-
-    /* Bases des joueurs */
+    /* ===== BASES AVEC SPOTS 3D ===== */
     .base {
       position: relative;
+      border-radius: 12px;
       display: flex;
-      flex-wrap: wrap;
       justify-content: center;
       align-items: center;
-      padding: 10%;
-      border-radius: 12px;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
     }
 
     .base-red {
       grid-column: 1 / 7;
       grid-row: 1 / 7;
-      background: linear-gradient(135deg, var(--red), #c0392b);
+      background: var(--red);
+    }
+
+    .base-green {
+      grid-column: 10 / 16;
+      grid-row: 1 / 7;
+      background: var(--green);
+      border-radius: 0 12px 0 0;
+    }
+
+    .base-blue {
+      grid-column: 1 / 7;
+      grid-row: 10 / 16;
+      background: var(--blue);
     }
 
     .base-yellow {
       grid-column: 10 / 16;
-      grid-row: 1 / 7;
-      background: linear-gradient(135deg, var(--yellow), #f39c12);
-    }
-
-    .base-green {
-      grid-column: 1 / 7;
       grid-row: 10 / 16;
-      background: linear-gradient(135deg, var(--green), #1e8449);
+      background: var(--yellow);
     }
 
-    .base-blue {
-      grid-column: 10 / 16;
-      grid-row: 10 / 16;
-      background: linear-gradient(135deg, var(--blue), #2980b9);
-    }
-
+    /* Zone intérieure des bases */
     .base-inner {
-      width: 75%;
-      height: 75%;
-      background: rgba(255, 255, 255, 0.95);
+      width: 70%;
+      height: 70%;
+      background: inherit;
       border-radius: 12px;
       display: grid;
       grid-template-columns: 1fr 1fr;
       grid-template-rows: 1fr 1fr;
-      gap: 12%;
-      padding: 12%;
-      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+      gap: 15%;
+      padding: 8%;
     }
 
-    .spawn {
+    /* ===== SPOTS 3D (EFFET CREUX) ===== */
+    .spot {
       width: 100%;
       height: 100%;
       border-radius: 50%;
-      background: #fff;
-      border: 4px solid;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+      position: relative;
+      box-shadow: 
+        inset 4px 4px 8px rgba(0,0,0,0.4),
+        inset -2px -2px 6px rgba(255,255,255,0.2),
+        0 2px 4px rgba(0,0,0,0.2);
     }
 
-    .base-red .spawn { border-color: var(--red); }
-    .base-yellow .spawn { border-color: var(--yellow); }
-    .base-green .spawn { border-color: var(--green); }
-    .base-blue .spawn { border-color: var(--blue); }
+    /* Anneau extérieur */
+    .spot::before {
+      content: '';
+      position: absolute;
+      inset: 8%;
+      border-radius: 50%;
+      border: 4px solid;
+      border-color: rgba(255,255,255,0.4);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
 
-    /* Centre (maison d'arrivée) */
+    /* Centre du spot */
+    .spot::after {
+      content: '';
+      position: absolute;
+      inset: 25%;
+      border-radius: 50%;
+      box-shadow: 
+        inset 2px 2px 6px rgba(0,0,0,0.5),
+        inset -1px -1px 4px rgba(255,255,255,0.2);
+    }
+
+    .base-red .spot {
+      background: linear-gradient(145deg, #ff6659, #c62828);
+    }
+    .base-red .spot::after {
+      background: linear-gradient(145deg, #d32f2f, #b71c1c);
+    }
+
+    .base-green .spot {
+      background: linear-gradient(145deg, #76d275, #2e7d32);
+    }
+    .base-green .spot::after {
+      background: linear-gradient(145deg, #388e3c, #1b5e20);
+    }
+
+    .base-blue .spot {
+      background: linear-gradient(145deg, #64b5f6, #1565c0);
+    }
+    .base-blue .spot::after {
+      background: linear-gradient(145deg, #1976d2, #0d47a1);
+    }
+
+    .base-yellow .spot {
+      background: linear-gradient(145deg, #ffee58, #f9a825);
+    }
+    .base-yellow .spot::after {
+      background: linear-gradient(145deg, #fbc02d, #f57f17);
+    }
+
+    /* ===== CENTRE DU PLATEAU ===== */
     .center {
       grid-column: 7 / 10;
       grid-row: 7 / 10;
       position: relative;
-      overflow: hidden;
-    }
-
-    .tri {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-    }
-
-    .tri.red {
-      clip-path: polygon(0 0, 100% 0, 50% 50%);
-      background: linear-gradient(180deg, var(--red), #c0392b);
-    }
-
-    .tri.blue {
-      clip-path: polygon(0 0, 0 100%, 50% 50%);
-      background: linear-gradient(90deg, var(--blue), #2980b9);
-    }
-
-    .tri.green {
-      clip-path: polygon(0 100%, 100% 100%, 50% 50%);
-      background: linear-gradient(0deg, var(--green), #1e8449);
-    }
-
-    .tri.yellow {
-      clip-path: polygon(100% 0, 100% 100%, 50% 50%);
-      background: linear-gradient(-90deg, var(--yellow), #f39c12);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: transparent;
     }
 
     .center-circle {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 30%;
-      height: 30%;
-      background: white;
+      width: 95%;
+      height: 95%;
       border-radius: 50%;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-      z-index: 10;
+      background: linear-gradient(145deg, #ffcc80, #ff9800);
+      box-shadow: 
+        0 4px 15px rgba(0,0,0,0.3),
+        inset 0 -5px 15px rgba(0,0,0,0.2),
+        inset 0 5px 15px rgba(255,255,255,0.3);
+      border: 4px solid #e65100;
     }
 
-    /* Couloirs colorés vers le centre */
-    .lane-red { background: linear-gradient(90deg, #ffcccc, var(--red)) !important; }
-    .lane-yellow { background: linear-gradient(-90deg, #fff5cc, var(--yellow)) !important; }
-    .lane-green { background: linear-gradient(90deg, #ccffcc, var(--green)) !important; }
-    .lane-blue { background: linear-gradient(-90deg, #cce5ff, var(--blue)) !important; }
-
-    /* Points d'entrée */
-    .entry-red { background: var(--red) !important; }
-    .entry-yellow { background: var(--yellow) !important; }
-    .entry-green { background: var(--green) !important; }
-    .entry-blue { background: var(--blue) !important; }
-
-    .entry-red::after,
-    .entry-yellow::after,
-    .entry-green::after,
-    .entry-blue::after {
-      content: "▶";
-      font-size: 12px;
-      color: white;
+    /* ===== COULOIRS COLORÉS ===== */
+    .lane-red {
+      background: linear-gradient(180deg, #ffcdd2, #ef9a9a) !important;
+      border-color: #e57373 !important;
     }
 
-    /* Titre */
-    .title {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      color: white;
-      font-size: 28px;
-      font-weight: 600;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    .lane-green {
+      background: linear-gradient(180deg, #c8e6c9, #a5d6a7) !important;
+      border-color: #81c784 !important;
     }
 
-    .title span {
-      background: linear-gradient(90deg, var(--red), var(--yellow), var(--green), var(--blue));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .lane-blue {
+      background: linear-gradient(180deg, #bbdefb, #90caf9) !important;
+      border-color: #64b5f6 !important;
     }
+
+    .lane-yellow {
+      background: linear-gradient(180deg, #fff9c4, #fff59d) !important;
+      border-color: #fff176 !important;
+    }
+
+    /* Cases de départ colorées */
+    .start-red { background: var(--red) !important; }
+    .start-green { background: var(--green) !important; }
+    .start-blue { background: var(--blue) !important; }
+    .start-yellow { background: var(--yellow) !important; }
+
+    /* Étoiles sécurisées */
+    .safe::after {
+      content: "★";
+      font-size: 14px;
+      color: rgba(0,0,0,0.3);
+    }
+
+    /* ===== PIONS (optionnel pour démo) ===== */
+    .pawn {
+      width: 70%;
+      height: 70%;
+      border-radius: 50%;
+      box-shadow: 
+        0 3px 8px rgba(0,0,0,0.4),
+        inset 0 -3px 6px rgba(0,0,0,0.3),
+        inset 0 3px 6px rgba(255,255,255,0.4);
+    }
+
+    .pawn-red { background: radial-gradient(circle at 30% 30%, #ff8a80, #c62828); }
   </style>
 </head>
 <body>
 
-  <div class="title">🎲 <span>Ludo Arena</span></div>
+  <div class="title">🎲 Ludo Arena</div>
 
   <div class="controls">
     <button id="btn2d" class="active" onclick="setView('2d')">Vue 2D</button>
     <button id="btn25d" onclick="setView('2.5d')">Vue 2.5D</button>
   </div>
 
-  <div id="boardContainer" class="board-container">
-    <div id="board" class="board"></div>
+  <div class="board-wrapper">
+    <div id="boardContainer" class="board-container">
+      <div id="board" class="board"></div>
+    </div>
   </div>
 
   <script>
     const board = document.getElementById('board');
 
-    // Fonction pour créer une cellule
-    function createCell(col, row, classes = '', content = '') {
+    // Créer une cellule
+    function createCell(col, row, classes = '') {
       const cell = document.createElement('div');
       cell.className = `cell ${classes}`;
       cell.style.gridColumn = col;
       cell.style.gridRow = row;
-      if (content) cell.innerHTML = content;
       return cell;
     }
 
-    // Fonction pour créer une base
+    // Créer une base avec spots 3D
     function createBase(color) {
       const base = document.createElement('div');
       base.className = `base base-${color}`;
@@ -305,106 +335,100 @@
       inner.className = 'base-inner';
       
       for (let i = 0; i < 4; i++) {
-        const spawn = document.createElement('div');
-        spawn.className = 'spawn';
-        inner.appendChild(spawn);
+        const spot = document.createElement('div');
+        spot.className = 'spot';
+        inner.appendChild(spot);
       }
       
       base.appendChild(inner);
       return base;
     }
 
-    // Créer les 4 bases
+    // ===== CRÉATION DU PLATEAU =====
+
+    // Bases
     board.appendChild(createBase('red'));
-    board.appendChild(createBase('yellow'));
     board.appendChild(createBase('green'));
     board.appendChild(createBase('blue'));
+    board.appendChild(createBase('yellow'));
 
-    // Créer le centre
+    // Centre
     const center = document.createElement('div');
     center.className = 'center';
-    center.innerHTML = `
-      <div class="tri red"></div>
-      <div class="tri yellow"></div>
-      <div class="tri green"></div>
-      <div class="tri blue"></div>
-      <div class="center-circle"></div>
-    `;
+    center.innerHTML = '<div class="center-circle"></div>';
     board.appendChild(center);
 
-    // ===== CHEMIN PRINCIPAL (52 cases) =====
-    
-    // Haut vertical (colonne 7) - de haut en bas
+    // ===== CHEMIN PRINCIPAL =====
+
+    // Colonne gauche (col 7) - haut
     for (let r = 1; r <= 6; r++) {
-      let cls = r === 2 ? 'start entry-red' : '';
+      let cls = r === 2 ? 'start-green safe' : '';
       board.appendChild(createCell(7, r, cls));
     }
-    
-    // Haut vertical (colonne 9) - de bas en haut  
-    for (let r = 6; r >= 1; r--) {
+
+    // Colonne droite (col 9) - haut
+    for (let r = 1; r <= 6; r++) {
       board.appendChild(createCell(9, r));
     }
-    
-    // Haut horizontal (ligne 7) - vers la gauche
-    for (let c = 6; c >= 1; c--) {
+
+    // Ligne du haut (ligne 7) - gauche
+    for (let c = 1; c <= 6; c++) {
       board.appendChild(createCell(c, 7));
     }
-    
-    // Haut horizontal (ligne 9) - vers la droite
+
+    // Ligne du haut (ligne 9) - gauche
     for (let c = 1; c <= 6; c++) {
-      let cls = c === 2 ? 'start entry-green' : '';
+      let cls = c === 2 ? 'start-red safe' : '';
       board.appendChild(createCell(c, 9, cls));
     }
-    
-    // Bas vertical (colonne 7) - de haut en bas
+
+    // Colonne gauche (col 7) - bas
     for (let r = 10; r <= 15; r++) {
-      board.appendChild(createCell(7, r));
+      let cls = r === 14 ? 'start-blue safe' : '';
+      board.appendChild(createCell(7, r, cls));
     }
-    
-    // Bas vertical (colonne 9) - de bas en haut
-    for (let r = 15; r >= 10; r--) {
-      let cls = r === 14 ? 'start entry-blue' : '';
-      board.appendChild(createCell(9, r, cls));
+
+    // Colonne droite (col 9) - bas
+    for (let r = 10; r <= 15; r++) {
+      board.appendChild(createCell(9, r));
     }
-    
-    // Bas horizontal (ligne 7) - vers la droite
+
+    // Ligne du bas (ligne 7) - droite
     for (let c = 10; c <= 15; c++) {
-      let cls = c === 14 ? 'start entry-yellow' : '';
+      let cls = c === 14 ? 'start-yellow safe' : '';
       board.appendChild(createCell(c, 7, cls));
     }
-    
-    // Bas horizontal (ligne 9) - vers la gauche
-    for (let c = 15; c >= 10; c--) {
+
+    // Ligne du bas (ligne 9) - droite
+    for (let c = 10; c <= 15; c++) {
       board.appendChild(createCell(c, 9));
     }
 
-    // ===== COULOIRS COLORÉS VERS LE CENTRE =====
-    
-    // Couloir ROUGE (ligne 8, de col 2 à 6)
+    // ===== COULOIRS COLORÉS =====
+
+    // Rouge (ligne 8, col 2-6)
     for (let c = 2; c <= 6; c++) {
       board.appendChild(createCell(c, 8, 'lane-red'));
     }
-    
-    // Couloir JAUNE (ligne 8, de col 10 à 14)
-    for (let c = 10; c <= 14; c++) {
-      board.appendChild(createCell(c, 8, 'lane-yellow'));
-    }
-    
-    // Couloir VERT (colonne 8, de ligne 10 à 14)
-    for (let r = 10; r <= 14; r++) {
+
+    // Vert (col 8, ligne 2-6)
+    for (let r = 2; r <= 6; r++) {
       board.appendChild(createCell(8, r, 'lane-green'));
     }
-    
-    // Couloir BLEU (colonne 8, de ligne 2 à 6)
-    for (let r = 2; r <= 6; r++) {
+
+    // Bleu (col 8, ligne 10-14)
+    for (let r = 10; r <= 14; r++) {
       board.appendChild(createCell(8, r, 'lane-blue'));
     }
 
-    // Cases aux coins des couloirs (ligne 8 col 1 et 15)
+    // Jaune (ligne 8, col 10-14)
+    for (let c = 10; c <= 14; c++) {
+      board.appendChild(createCell(c, 8, 'lane-yellow'));
+    }
+
+    // Cases de bordure
     board.appendChild(createCell(1, 8));
     board.appendChild(createCell(15, 8));
-    
-    // Cases aux coins des couloirs (col 8 ligne 1 et 15)
     board.appendChild(createCell(8, 1));
     board.appendChild(createCell(8, 15));
 
