@@ -409,10 +409,10 @@
     board.appendChild(createCell(8, 15));
 
     // Cases aux coins des couloirs (col 8 ligne 1 et 15)
-    board.appendChild(createCell(13, 7, 'safe lane-blue'));
-    board.appendChild(createCell(7, 13, 'safe lane-red'));
-    board.appendChild(createCell(3, 9, 'safe lane-green'));
-    board.appendChild(createCell(9, 3, 'safe lane-yellow'));
+    board.appendChild(createCell(13, 9, 'safe lane-blue'));
+    board.appendChild(createCell(7, 13, 'safe lane-blue'));
+    board.appendChild(createCell(13, 9, 'safe lane-green'));
+    board.appendChild(createCell(9, 3, 'safe lane-red'));
 
     // ===== GESTION DES VUES =====
     function setView(mode) {
