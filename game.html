@@ -432,38 +432,31 @@
       }
     }
 
-    // Fonction pour créer une scène 3D dans une base
-    function create3DScene(baseElement, color) {
-      const width = baseElement.offsetWidth;
-      const height = baseElement.offsetHeight;
+    // Fonction mise à jour pour créer une scène 3D dans un spawn
+    function create3DSceneInSpawn(spawnElement, color) {
+      const width = spawnElement.offsetWidth;
+      const height = spawnElement.offsetHeight;
 
       // Création de la scène
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
       const renderer = new THREE.WebGLRenderer({ alpha: true });
       renderer.setSize(width, height);
-      baseElement.appendChild(renderer.domElement);
+      spawnElement.appendChild(renderer.domElement);
 
       // Lumière
       const light = new THREE.PointLight(0xffffff, 1, 100);
       light.position.set(5, 5, 5);
       scene.add(light);
 
-      // Ajout des pions
+      // Ajout du pion
       const geometry = new THREE.CylinderGeometry(0.2, 0.2, 0.5, 32);
       const material = new THREE.MeshStandardMaterial({ color });
+      const pawn = new THREE.Mesh(geometry, material);
+      pawn.position.set(0, 0.25, 0);
+      scene.add(pawn);
 
-      const positions = [
-        [-0.5, 0.5], [0.5, 0.5], [-0.5, -0.5], [0.5, -0.5]
-      ];
-
-      positions.forEach(([x, z]) => {
-        const pawn = new THREE.Mesh(geometry, material);
-        pawn.position.set(x, 0.25, z);
-        scene.add(pawn);
-      });
-
-      camera.position.z = 2;
+      camera.position.z = 1.5;
 
       // Animation
       function animate() {
@@ -473,16 +466,16 @@
       animate();
     }
 
-    // Ajout des scènes 3D dans chaque base
-    document.querySelectorAll('.base').forEach(base => {
-      if (base.classList.contains('base-red')) {
-        create3DScene(base, '#e74c3c');
-      } else if (base.classList.contains('base-yellow')) {
-        create3DScene(base, '#f1c40f');
-      } else if (base.classList.contains('base-green')) {
-        create3DScene(base, '#27ae60');
-      } else if (base.classList.contains('base-blue')) {
-        create3DScene(base, '#3498db');
+    // Ajout des scènes 3D dans chaque spawn
+    document.querySelectorAll('.spawn').forEach(spawn => {
+      if (spawn.closest('.base-red')) {
+        create3DSceneInSpawn(spawn, '#e74c3c');
+      } else if (spawn.closest('.base-yellow')) {
+        create3DSceneInSpawn(spawn, '#f1c40f');
+      } else if (spawn.closest('.base-green')) {
+        create3DSceneInSpawn(spawn, '#27ae60');
+      } else if (spawn.closest('.base-blue')) {
+        create3DSceneInSpawn(spawn, '#3498db');
       }
     });
   </script>
