@@ -283,6 +283,7 @@
     <div id="board" class="board"></div>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
     const board = document.getElementById('board');
 
@@ -430,6 +431,60 @@
         btn2d.classList.remove('active');
       }
     }
+
+    // Fonction pour créer une scène 3D dans une base
+    function create3DScene(baseElement, color) {
+      const width = baseElement.offsetWidth;
+      const height = baseElement.offsetHeight;
+
+      // Création de la scène
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ alpha: true });
+      renderer.setSize(width, height);
+      baseElement.appendChild(renderer.domElement);
+
+      // Lumière
+      const light = new THREE.PointLight(0xffffff, 1, 100);
+      light.position.set(5, 5, 5);
+      scene.add(light);
+
+      // Ajout des pions
+      const geometry = new THREE.CylinderGeometry(0.2, 0.2, 0.5, 32);
+      const material = new THREE.MeshStandardMaterial({ color });
+
+      const positions = [
+        [-0.5, 0.5], [0.5, 0.5], [-0.5, -0.5], [0.5, -0.5]
+      ];
+
+      positions.forEach(([x, z]) => {
+        const pawn = new THREE.Mesh(geometry, material);
+        pawn.position.set(x, 0.25, z);
+        scene.add(pawn);
+      });
+
+      camera.position.z = 2;
+
+      // Animation
+      function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+      }
+      animate();
+    }
+
+    // Ajout des scènes 3D dans chaque base
+    document.querySelectorAll('.base').forEach(base => {
+      if (base.classList.contains('base-red')) {
+        create3DScene(base, '#e74c3c');
+      } else if (base.classList.contains('base-yellow')) {
+        create3DScene(base, '#f1c40f');
+      } else if (base.classList.contains('base-green')) {
+        create3DScene(base, '#27ae60');
+      } else if (base.classList.contains('base-blue')) {
+        create3DScene(base, '#3498db');
+      }
+    });
   </script>
 </body>
 </html>
