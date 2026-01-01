@@ -296,27 +296,41 @@
     floor.receiveShadow = true;
     scene.add(floor);
 
-    // Base du plateau
+    // Base du plateau — extrudée avec un trou central
     const boardBase = new THREE.Group();
-    const baseGeo = new THREE.BoxGeometry(SIZE * TILE + 1, 0.8, SIZE * TILE + 1);
-    const baseMat = new THREE.MeshStandardMaterial({
-      color: 0x1e293b,
-      metalness: 0.3,
-      roughness: 0.7
-    });
+    const W = SIZE * TILE + 1;
+    const H = SIZE * TILE + 1;
+    const depth = 0.8;
+    const holeRadius = 1.6; // ajuster la taille du trou central
+
+    // Rectangle shape centered at origin
+    const shape = new THREE.Shape();
+    shape.moveTo(-W/2, -H/2);
+    shape.lineTo(W/2, -H/2);
+    shape.lineTo(W/2, H/2);
+    shape.lineTo(-W/2, H/2);
+    shape.closePath();
+
+    // Hole path (circle) in the center
+    const holePath = new THREE.Path();
+    holePath.absarc(0, 0, holeRadius, 0, Math.PI * 2, false);
+    shape.holes.push(holePath);
+
+    const extrudeSettings = { depth: depth, bevelEnabled: false };
+    const baseGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    baseGeo.computeVertexNormals();
+    const baseMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.3, roughness: 0.7 });
     const base = new THREE.Mesh(baseGeo, baseMat);
-    base.position.y = -0.4;
+    // rotate so extrusion depth maps to Y axis and position to match previous base
+    base.rotation.x = -Math.PI / 2;
+    base.position.y = -depth / 2;
     base.castShadow = true;
     base.receiveShadow = true;
     boardBase.add(base);
 
-    // Bordure
-    const borderGeo = new THREE.BoxGeometry(SIZE * TILE + 1.2, 0.3, SIZE * TILE + 1.2);
-    const borderMat = new THREE.MeshStandardMaterial({
-      color: 0xfbbf24,
-      metalness: 0.8,
-      roughness: 0.2
-    });
+    // Bordure restante (anneau extérieur pour esthétique)
+    const borderGeo = new THREE.BoxGeometry(W + 0.2, 0.3, H + 0.2);
+    const borderMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.8, roughness: 0.2 });
     const border = new THREE.Mesh(borderGeo, borderMat);
     border.position.y = -0.05;
     border.castShadow = true;
