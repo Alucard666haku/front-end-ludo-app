@@ -16,8 +16,16 @@
   <div class="ui"><button id="resetBtn">Reset View</button></div>
   <div id="container"></div>
 
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.152.2/build/three.module.js"
+      }
+    }
+  </script>
+
   <script type="module">
-    import * as THREE from 'https://unpkg.com/three@0.152.2/build/three.module.js';
+    import * as THREE from 'three';
     import { OrbitControls } from 'https://unpkg.com/three@0.152.2/examples/jsm/controls/OrbitControls.js';
 
     // Basic config
