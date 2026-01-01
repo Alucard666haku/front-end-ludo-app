@@ -670,38 +670,7 @@
     }
 
     function createCenterDecoration() {
-      const triSize = 2.4;
-      const positions = [
-        { x: -1.2, z: -1.2, rot: Math.PI * 0.25, color: COLORS.red },
-        { x: 1.2, z: -1.2, rot: Math.PI * -0.25, color: COLORS.yellow },
-        { x: -1.2, z: 1.2, rot: Math.PI * 0.75, color: COLORS.green },
-        { x: 1.2, z: 1.2, rot: Math.PI * -0.75, color: COLORS.blue }
-      ];
-
-      positions.forEach(pos => {
-        const triGeo = new THREE.CylinderGeometry(0, triSize, 0.15, 3);
-        const triMat = new THREE.MeshStandardMaterial({
-          color: pos.color,
-          metalness: 0.4,
-          roughness: 0.6
-        });
-        const tri = new THREE.Mesh(triGeo, triMat);
-        tri.position.set(pos.x, 0.08, pos.z);
-        tri.rotation.y = pos.rot;
-        tri.castShadow = true;
-        scene.add(tri);
-      });
-
-      const circGeo = new THREE.CylinderGeometry(0.7, 0.7, 0.12, 32);
-      const circMat = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
-        metalness: 0.6,
-        roughness: 0.3
-      });
-      const circ = new THREE.Mesh(circGeo, circMat);
-      circ.position.set(0, 0.1, 0);
-      circ.castShadow = true;
-      scene.add(circ);
+      // Trou vide au centre — aucune décoration
     }
 
     function rgbToHex(hex) {
