@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ludo 3D Arena</title>
+  <style>
+    html,body{height:100%;margin:0}
+    body{display:flex;align-items:center;justify-content:center;background:#0f1724;font-family:Poppins,Arial;color:#fff}
+    #container{width:90vmin;height:90vmin;border-radius:12px;overflow:hidden;background:#071024;box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+    .ui{position:fixed;top:18px;left:18px;z-index:10}
+    button{padding:8px 12px;border-radius:8px;border:none;background:#1e293b;color:#fff;cursor:pointer}
+  </style>
+</head>
+<body>
+  <div class="ui"><button id="resetBtn">Reset View</button></div>
+  <div id="container"></div>
+
+  <!-- Three.js and OrbitControls -->
+  <script src="https://unpkg.com/three@0.152.2/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    // Basic config
+    const container = document.getElementById('container');
+    const WIDTH = container.clientWidth, HEIGHT = container.clientHeight;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x071024);
+
+    const camera = new THREE.PerspectiveCamera(45, WIDTH / HEIGHT, 0.1, 1000);
+    camera.position.set(0, 25, 20);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(WIDTH, HEIGHT);
+    renderer.setPixelRatio(window.devicePixelRatio ? window.devicePixelRatio : 1);
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.target.set(0,0,0);
+    controls.update();
+
+    // Lights
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 0.7);
+    hemi.position.set(0, 50, 0); scene.add(hemi);
+    const dir = new THREE.DirectionalLight(0xffffff, 0.6); dir.position.set(10,20,10); scene.add(dir);
+
+    // Board parameters
+    const SIZE = 15; // 15x15 grid
+    const TILE = 1; // 1 unit per tile
+    const HALF = (SIZE * TILE) / 2;
+
+    // Colors
+    const COLORS = {
+      path: 0xf8f9fa,
+      line: 0xdee2e6,
+      red: 0xe74c3c,
+      yellow: 0xf1c40f,
+      green: 0x27ae60,
+      blue: 0x3498db,
+      boardBg: 0xecf0f1
+    };
+
+    // Helper: grid coordinate to world position (centered)
+    function toPos(col, row){
+      // col,row are 1..15; convert so center (0,0)
+      const x = (col - (SIZE+1)/2) * TILE + TILE/2;
+      const z = (row - (SIZE+1)/2) * TILE + TILE/2;
+      return {x, z};
+    }
+
+    // Create floor plane for subtle shadow
+    const floorGeo = new THREE.PlaneGeometry(SIZE * TILE, SIZE * TILE, 1,1);
+    const floorMat = new THREE.MeshStandardMaterial({color:0x0b1220, metalness:0.1, roughness:0.9});
+    const floor = new THREE.Mesh(floorGeo, floorMat); floor.rotation.x = -Math.PI/2; floor.position.y = -0.01; scene.add(floor);
+
+    // Create tiles
+    const tileGroup = new THREE.Group();
+    for(let r=1;r<=SIZE;r++){
+      for(let c=1;c<=SIZE;c++){
+        const {x,z} = toPos(c,r);
+        const geom = new THREE.BoxGeometry(TILE*0.98, 0.12, TILE*0.98);
+        const color = determineTileColor(c,r);
+        const mat = new THREE.MeshStandardMaterial({color});
+        const tile = new THREE.Mesh(geom, mat);
+        tile.position.set(x, 0, z);
+        tile.userData = {col:c,row:r};
+        tileGroup.add(tile);
+      }
+    }
+    scene.add(tileGroup);
+
+    // Board border
+    const borderGeo = new THREE.BoxGeometry(SIZE*TILE + 0.6, 0.6, SIZE*TILE + 0.6);
+    const borderMat = new THREE.MeshStandardMaterial({color:0x1f2a36});
+    const border = new THREE.Mesh(borderGeo, borderMat); border.position.y = -0.35; border.rotation.y = 0; scene.add(border);
+
+    // Bases: create raised platforms and spawn markers
+    const bases = [];
+    const baseDefs = [
+      {name:'red', cols:[1,6], rows:[1,6], color:COLORS.red},
+      {name:'yellow', cols:[10,15], rows:[1,6], color:COLORS.yellow},
+      {name:'green', cols:[1,6], rows:[10,15], color:COLORS.green},
+      {name:'blue', cols:[10,15], rows:[10,15], color:COLORS.blue}
+    ];
+
+    baseDefs.forEach(def => {
+      const minC = def.cols[0], maxC = def.cols[1];
+      const minR = def.rows[0], maxR = def.rows[1];
+      // compute center
+      const centerCol = (minC+maxC)/2; const centerRow = (minR+maxR)/2;
+      const p = toPos(centerCol, centerRow);
+      const bw = (maxC-minC+1)*TILE; const bh = (maxR-minR+1)*TILE;
+      const geo = new THREE.BoxGeometry(bw*0.9, 0.6, bh*0.9);
+      const mat = new THREE.MeshStandardMaterial({color:def.color, roughness:0.6, metalness:0.1});
+      const platform = new THREE.Mesh(geo, mat); platform.position.set(p.x, 0.31, p.z);
+      scene.add(platform);
+
+      // spawn positions inside base (4 spots)
+      const spawnOffsets = [
+        [-0.8, 0.8], [0.8, 0.8], [-0.8, -0.8], [0.8, -0.8]
+      ];
+      const spawns = [];
+      spawnOffsets.forEach((so,i)=>{
+        const sx = p.x + so[0]*0.35; const sz = p.z + so[1]*0.35;
+        const circleGeo = new THREE.CylinderGeometry(0.35,0.35,0.06,32);
+        const circleMat = new THREE.MeshStandardMaterial({color:0xffffff});
+        const mark = new THREE.Mesh(circleGeo, circleMat); mark.position.set(sx, 0.37, sz); mark.rotation.x = -Math.PI/2;
+        scene.add(mark);
+        spawns.push({x:sx,z:sz});
+      });
+      bases.push({name:def.name, color:def.color, center:p, spawns});
+    });
+
+    // Create pawns and place them on spawn spots
+    const pawns = [];
+    const pawnGeom = new THREE.CylinderGeometry(0.28,0.38,0.7,32);
+    function createPawn(color){
+      const mat = new THREE.MeshStandardMaterial({color});
+      const m = new THREE.Mesh(pawnGeom, mat); m.castShadow = true; return m;
+    }
+
+    bases.forEach(base=>{
+      base.spawns.forEach((s, idx)=>{
+        const p = createPawn(base.color);
+        p.position.set(s.x, 0.6, s.z);
+        scene.add(p);
+        pawns.push({mesh:p, base:base.name, spawnIndex:idx});
+      });
+    });
+
+    // Simple center decoration (four colored triangles)
+    createCenterDecoration();
+
+    // Animation
+    function animate(){
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Resize
+    window.addEventListener('resize', ()=>{
+      const w = container.clientWidth, h = container.clientHeight;
+      renderer.setSize(w,h); camera.aspect = w/h; camera.updateProjectionMatrix();
+    });
+
+    // Reset view button
+    document.getElementById('resetBtn').addEventListener('click', ()=>{camera.position.set(0,25,20); controls.target.set(0,0,0); controls.update();});
+
+    // ---------- Helper functions ----------
+    function determineTileColor(c,r){
+      // Bases
+      if(c>=1 && c<=6 && r>=1 && r<=6) return COLORS.red;
+      if(c>=10 && c<=15 && r>=1 && r<=6) return COLORS.yellow;
+      if(c>=1 && c<=6 && r>=10 && r<=15) return COLORS.green;
+      if(c>=10 && c<=15 && r>=10 && r<=15) return COLORS.blue;
+
+      // center 3x3
+      if(c>=7 && c<=9 && r>=7 && r<=9) return 0xffffff;
+
+      // lanes towards center (approx):
+      // red lane (row 8, cols 2..6)
+      if(r===8 && c>=2 && c<=6) return 0xffcccc;
+      // yellow lane (row 8, cols 10..14)
+      if(r===8 && c>=10 && c<=14) return 0xfff5cc;
+      // green lane (col 8, rows 10..14)
+      if(c===8 && r>=10 && r<=14) return 0xccffcc;
+      // blue lane (col 8, rows 2..6)
+      if(c===8 && r>=2 && r<=6) return 0xcce5ff;
+
+      // special entry starts
+      if(c===7 && r===2) return COLORS.red;
+      if(c===2 && r===9) return COLORS.green;
+      if(c===14 && r===7) return COLORS.yellow;
+      if(c===9 && r===14) return COLORS.blue;
+
+      return COLORS.path;
+    }
+
+    function createCenterDecoration(){
+      // four triangular prisms colored
+      const triSize = 2.6; const h = 0.2;
+      const triGeom = new THREE.CylinderGeometry(0, triSize, 0.01, 3);
+      // red
+      const red = new THREE.Mesh(triGeom, new THREE.MeshStandardMaterial({color:COLORS.red}));
+      red.position.set(-1.3,0.06,-1.3); red.rotation.y = Math.PI*0.25; scene.add(red);
+      const yellow = new THREE.Mesh(triGeom, new THREE.MeshStandardMaterial({color:COLORS.yellow}));
+      yellow.position.set(1.3,0.06,-1.3); yellow.rotation.y = Math.PI*-0.25; scene.add(yellow);
+      const green = new THREE.Mesh(triGeom, new THREE.MeshStandardMaterial({color:COLORS.green}));
+      green.position.set(-1.3,0.06,1.3); green.rotation.y = Math.PI*0.75; scene.add(green);
+      const blue = new THREE.Mesh(triGeom, new THREE.MeshStandardMaterial({color:COLORS.blue}));
+      blue.position.set(1.3,0.06,1.3); blue.rotation.y = Math.PI*-0.75; scene.add(blue);
+      // center circle
+      const circ = new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.6,0.08,32), new THREE.MeshStandardMaterial({color:0xffffff}));
+      circ.position.set(0,0.06,0); circ.rotation.x = -Math.PI/2; scene.add(circ);
+    }
+
+  </script>
+</body>
+</html>
