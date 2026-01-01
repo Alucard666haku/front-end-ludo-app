@@ -296,16 +296,33 @@
     floor.receiveShadow = true;
     scene.add(floor);
 
-    // Base du plateau
+    // Base du plateau — extrudée avec trou central
     const boardBase = new THREE.Group();
-    const baseGeo = new THREE.BoxGeometry(SIZE * TILE + 1, 0.8, SIZE * TILE + 1);
-    const baseMat = new THREE.MeshStandardMaterial({
-      color: 0x1e293b,
-      metalness: 0.3,
-      roughness: 0.7
-    });
+    const W = SIZE * TILE + 1;
+    const H = SIZE * TILE + 1;
+    const depth = 0.8;
+    const holeRadius = 1.5; // rayon du trou au centre
+
+    // Rectangle shape centered at origin
+    const shape = new THREE.Shape();
+    shape.moveTo(-W/2, -H/2);
+    shape.lineTo(W/2, -H/2);
+    shape.lineTo(W/2, H/2);
+    shape.lineTo(-W/2, H/2);
+    shape.closePath();
+
+    // Hole path (circle) in the center
+    const holePath = new THREE.Path();
+    holePath.absarc(0, 0, holeRadius, 0, Math.PI * 2, false);
+    shape.holes.push(holePath);
+
+    const extrudeSettings = { depth: depth, bevelEnabled: false };
+    const baseGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    baseGeo.computeVertexNormals();
+    const baseMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.3, roughness: 0.7 });
     const base = new THREE.Mesh(baseGeo, baseMat);
-    base.position.y = -0.4;
+    base.rotation.x = -Math.PI / 2;
+    base.position.y = -depth / 2;
     base.castShadow = true;
     base.receiveShadow = true;
     boardBase.add(base);
@@ -692,16 +709,8 @@
         scene.add(tri);
       });
 
-      const circGeo = new THREE.CylinderGeometry(0.7, 0.7, 0.12, 32);
-      const circMat = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
-        metalness: 0.6,
-        roughness: 0.3
-      });
-      const circ = new THREE.Mesh(circGeo, circMat);
-      circ.position.set(0, 0.1, 0);
-      circ.castShadow = true;
-      scene.add(circ);
+      // Trou au centre — cercle blanc supprimé pour montrer le vide
+      // Le trou est généré par l'ExtrudeGeometry de la base
     }
 
     function rgbToHex(hex) {
