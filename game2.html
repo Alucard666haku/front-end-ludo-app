@@ -16,11 +16,10 @@
   <div class="ui"><button id="resetBtn">Reset View</button></div>
   <div id="container"></div>
 
-  <!-- Three.js and OrbitControls -->
-  <script src="https://unpkg.com/three@0.152.2/build/three.min.js"></script>
-  <script src="https://unpkg.com/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
+  <script type="module">
+    import * as THREE from 'https://unpkg.com/three@0.152.2/build/three.module.js';
+    import { OrbitControls } from 'https://unpkg.com/three@0.152.2/examples/jsm/controls/OrbitControls.js';
 
-  <script>
     // Basic config
     const container = document.getElementById('container');
     const WIDTH = container.clientWidth, HEIGHT = container.clientHeight;
@@ -36,7 +35,7 @@
     renderer.setPixelRatio(window.devicePixelRatio ? window.devicePixelRatio : 1);
     container.appendChild(renderer.domElement);
 
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0,0,0);
     controls.update();
 
