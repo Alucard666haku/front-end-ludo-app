@@ -694,12 +694,12 @@
 
       const circGeo = new THREE.CylinderGeometry(0.7, 0.7, 0.12, 32);
       const circMat = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
+        color: 0x000000,
         metalness: 0.6,
         roughness: 0.3
       });
       const circ = new THREE.Mesh(circGeo, circMat);
-      circ.position.set(0, 2.5, 0);
+      circ.position.set(0, 0, 0);
       circ.castShadow = true;
       scene.add(circ);
     }
