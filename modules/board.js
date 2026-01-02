@@ -383,8 +383,13 @@ function createCentralSurface(scene, radius) {
   });
   const surface = new THREE.Mesh(geo, mat);
   surface.rotation.x = -Math.PI / 2;
-  // Place slightly above the board top so it's visible
-  surface.position.y = 0.12;
+  // Place above the circuit tiles so it's clearly visible
+  surface.position.y = 0.5;
+  // Avoid z-fighting / being hidden under the board by using polygonOffset
+  mat.polygonOffset = true;
+  mat.polygonOffsetFactor = -1;
+  mat.polygonOffsetUnits = -4;
+  surface.renderOrder = 2;
   surface.receiveShadow = true;
   scene.add(surface);
 }
