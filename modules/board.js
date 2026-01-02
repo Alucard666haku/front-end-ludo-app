@@ -66,8 +66,12 @@ function createPolygonBoard(scene, numPlayers) {
   // Bordure
   createBoardBorder(scene, boardRadius, angleStep, numPlayers);
   
-  // Bases des joueurs et chemins
-  createPlayerBases(scene, boardRadius, angleStep, numPlayers);
+  // Circuit central (au milieu de la table)
+  const circuitRadius = boardRadius * 0.35;
+  createMainCircuitPath(scene, circuitRadius, angleStep, numPlayers);
+
+  // Bases des joueurs et chemins (les chemins radiaires rejoindront le circuit central)
+  createPlayerBases(scene, boardRadius, circuitRadius, angleStep, numPlayers);
 }
 
 function createBoardBorder(scene, radius, angleStep, numPlayers) {
@@ -95,7 +99,7 @@ function createBoardBorder(scene, radius, angleStep, numPlayers) {
   scene.add(border);
 }
 
-function createPlayerBases(scene, radius, angleStep, numPlayers) {
+function createPlayerBases(scene, radius, circuitRadius, angleStep, numPlayers) {
   pathTiles = [];
   const colors = getPlayerColors();
   
@@ -107,7 +111,8 @@ function createPlayerBases(scene, radius, angleStep, numPlayers) {
     const baseZ = Math.sin(angle) * baseDistance;
     
     createBase(scene, baseX, baseZ, baseRadius, i, colors[i]);
-    createPathTilesForPlayer(scene, i, baseX, baseZ, angle, colors[i]);
+    // create radial path that goes inward and connects to the central circuit
+    createPathTilesForPlayer(scene, i, baseX, baseZ, angle, colors[i], circuitRadius);
     createPawnsForPlayer(scene, i, baseX, baseZ, baseRadius, colors[i]);
   }
 }
@@ -129,41 +134,86 @@ function createBase(scene, x, z, radius, playerIndex, playerColor) {
   scene.add(baseLight);
 }
 
-function createPathTilesForPlayer(scene, playerIndex, baseX, baseZ, angle, playerColor) {
+function createPathTilesForPlayer(scene, playerIndex, baseX, baseZ, angle, playerColor, circuitRadius) {
   const pathLength = gameConfig.pathLength;
   const tileSize = 0.9;
-  const spacing = 1.2;
-  
-  // Chemin principal radiaire
+
+  // Distance from base center to circuit centerline
+  const baseDist = Math.sqrt(baseX * baseX + baseZ * baseZ);
+  const gap = 0.6; // small gap so tiles don't overlap circuit geometry
+  const distToCircuit = Math.max(0.8, baseDist - circuitRadius - gap);
+
+  // Place tiles moving INWARD from the base towards the central circuit
   for (let j = 1; j <= pathLength; j++) {
-    const distance = 3.5 + (j * spacing);
-    const tileX = baseX + Math.cos(angle) * distance;
-    const tileZ = baseZ + Math.sin(angle) * distance;
-    
-    const tileGeo = new THREE.BoxGeometry(tileSize, 0.15, tileSize);
+    const t = j / (pathLength + 1); // distribute tiles evenly
+    const distance = t * distToCircuit;
+    const tileX = baseX - Math.cos(angle) * distance;
+    const tileZ = baseZ - Math.sin(angle) * distance;
+
+    const tileGeo = new THREE.BoxGeometry(tileSize, 0.12, tileSize);
     const tileMat = new THREE.MeshStandardMaterial({
       color: playerColor.hex,
       metalness: 0.2,
       roughness: 0.5,
       emissive: playerColor.hex,
-      emissiveIntensity: 0.1
+      emissiveIntensity: 0.08
     });
     const tile = new THREE.Mesh(tileGeo, tileMat);
-    tile.position.set(tileX, 0.08, tileZ);
+    tile.position.set(tileX, 0.06, tileZ);
     tile.castShadow = true;
     tile.receiveShadow = true;
     scene.add(tile);
-    
+
     pathTiles.push({
       mesh: tile,
       playerIndex: playerIndex,
       position: { x: tileX, z: tileZ },
       order: j
     });
-    
-    // Marqueurs spéciaux
-    if (j === 1) createStartMarker(scene, tileX, 0.15, tileZ, playerColor.hex);
-    if (j === pathLength) createEndMarker(scene, tileX, 0.15, tileZ, playerColor.hex);
+
+    // Marqueurs spéciaux: outermost near base, innermost near circuit
+    if (j === 1) createStartMarker(scene, tileX, 0.12, tileZ, playerColor.hex);
+    if (j === pathLength) createEndMarker(scene, tileX, 0.12, tileZ, playerColor.hex);
+  }
+}
+
+// Create a central circuit that sits inside the polygon (middle of the table)
+function createMainCircuitPath(scene, circuitRadius, angleStep, numPlayers) {
+  const tileSize = 0.85;
+  const tilesPerSide = 8; // number of tiles between player axes
+  let globalOrder = 0;
+
+  for (let i = 0; i < numPlayers; i++) {
+    const startAngle = i * angleStep - Math.PI / 2;
+    const endAngle = (i + 1) * angleStep - Math.PI / 2;
+
+    for (let j = 0; j < tilesPerSide; j++) {
+      const t = j / tilesPerSide;
+      const angle = startAngle + (endAngle - startAngle) * t;
+      const tileX = Math.cos(angle) * circuitRadius;
+      const tileZ = Math.sin(angle) * circuitRadius;
+
+      const tileGeo = new THREE.BoxGeometry(tileSize, 0.12, tileSize);
+      const tileMat = new THREE.MeshStandardMaterial({
+        color: 0x94a3b8,
+        metalness: 0.4,
+        roughness: 0.6,
+        emissive: 0x475569,
+        emissiveIntensity: 0.05
+      });
+      const tile = new THREE.Mesh(tileGeo, tileMat);
+      tile.position.set(tileX, 0.06, tileZ);
+      tile.castShadow = true;
+      tile.receiveShadow = true;
+      scene.add(tile);
+
+      pathTiles.push({
+        mesh: tile,
+        playerIndex: -1, // circuit commun
+        position: { x: tileX, z: tileZ },
+        order: globalOrder++
+      });
+    }
   }
 }
 
