@@ -3,6 +3,7 @@ import { gameConfig } from './config.js';
 
 export let boardSize = 0;
 export let pathTiles = [];
+export let circuitTiles = [];
 
 export function createBoard(scene, numPlayers) {
   boardSize = 10 + numPlayers * 1.5 + gameConfig.pathLength * 0.8;
@@ -139,31 +140,28 @@ function createBase(scene, x, z, radius, playerIndex, playerColor) {
 
 function createPathTilesForPlayer(scene, playerIndex, baseX, baseZ, angle, playerColor, circuitRadius) {
   const pathLength = gameConfig.pathLength;
-  const tileSize = 0.9;
+  const tileSize = 1.0;
 
-  // Distance from base center to circuit centerline
-  const baseDist = Math.sqrt(baseX * baseX + baseZ * baseZ);
-  const gap = 0.6; // small gap so tiles don't overlap circuit geometry
-  const distToCircuit = Math.max(0.8, baseDist - circuitRadius - gap);
+  // Target entry point on the circuit aligned with the base angle
+  const targetX = Math.cos(angle) * circuitRadius;
+  const targetZ = Math.sin(angle) * circuitRadius;
 
-  // Place tiles moving INWARD from the base towards the central circuit
+  // Interpolate tiles from base center to the target entry point
   for (let j = 1; j <= pathLength; j++) {
-    const t = j / (pathLength + 1); // distribute tiles evenly
-    const distance = t * distToCircuit;
-    const tileX = baseX - Math.cos(angle) * distance;
-    const tileZ = baseZ - Math.sin(angle) * distance;
+    const t = j / (pathLength + 1);
+    const tileX = baseX + (targetX - baseX) * t;
+    const tileZ = baseZ + (targetZ - baseZ) * t;
 
-    const tileGeo = new THREE.BoxGeometry(tileSize, 0.12, tileSize);
+    const tileGeo = new THREE.BoxGeometry(tileSize, 0.14, tileSize);
     const tileMat = new THREE.MeshStandardMaterial({
       color: playerColor.hex,
-      metalness: 0.2,
-      roughness: 0.5,
+      metalness: 0.1,
+      roughness: 0.4,
       emissive: playerColor.hex,
-      emissiveIntensity: 0.08
+      emissiveIntensity: 0.06
     });
     const tile = new THREE.Mesh(tileGeo, tileMat);
-    // raise radial path tiles above the central surface so they're visible
-    tile.position.set(tileX, 0.7, tileZ);
+    tile.position.set(tileX, 0.8, tileZ);
     tile.castShadow = true;
     tile.receiveShadow = true;
     scene.add(tile);
@@ -175,10 +173,30 @@ function createPathTilesForPlayer(scene, playerIndex, baseX, baseZ, angle, playe
       order: j
     });
 
-    // Marqueurs spéciaux: outermost near base, innermost near circuit
-    if (j === 1) createStartMarker(scene, tileX, 0.75, tileZ, playerColor.hex);
-    if (j === pathLength) createEndMarker(scene, tileX, 0.75, tileZ, playerColor.hex);
+    if (j === 1) createStartMarker(scene, tileX, 0.85, tileZ, playerColor.hex);
   }
+
+  // Create a colored connector/entry tile on the circuit so it's obvious where this
+  // player's path joins the common track.
+  const entryGeo = new THREE.BoxGeometry(tileSize * 1.05, 0.16, tileSize * 1.05);
+  const entryMat = new THREE.MeshStandardMaterial({
+    color: playerColor.hex,
+    metalness: 0.15,
+    roughness: 0.3,
+    emissive: playerColor.hex,
+    emissiveIntensity: 0.08
+  });
+  const entryTile = new THREE.Mesh(entryGeo, entryMat);
+  entryTile.position.set(targetX, 0.8, targetZ);
+  scene.add(entryTile);
+
+  pathTiles.push({
+    mesh: entryTile,
+    playerIndex: playerIndex,
+    position: { x: targetX, z: targetZ },
+    order: pathLength + 1,
+    isEntry: true
+  });
 }
 
 // Create a central circuit that sits inside the polygon (middle of the table)
@@ -186,6 +204,7 @@ function createMainCircuitPath(scene, circuitRadius, angleStep, numPlayers) {
   const tileSize = 0.85;
   const tilesPerSide = 8; // number of tiles between player axes
   let globalOrder = 0;
+  circuitTiles = [];
 
   for (let i = 0; i < numPlayers; i++) {
     const startAngle = i * angleStep - Math.PI / 2;
@@ -217,6 +236,12 @@ function createMainCircuitPath(scene, circuitRadius, angleStep, numPlayers) {
         playerIndex: -1, // circuit commun
         position: { x: tileX, z: tileZ },
         order: globalOrder++
+      });
+
+      circuitTiles.push({
+        mesh: tile,
+        position: { x: tileX, z: tileZ },
+        order: globalOrder - 1
       });
     }
   }
