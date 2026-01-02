@@ -159,7 +159,7 @@ function createPathTilesForPlayer(scene, playerIndex, baseX, baseZ, angle, playe
       emissiveIntensity: 0.08
     });
     const tile = new THREE.Mesh(tileGeo, tileMat);
-    tile.position.set(tileX, 0.06, tileZ);
+    tile.position.set(tileX, 0.4, tileZ);
     tile.castShadow = true;
     tile.receiveShadow = true;
     scene.add(tile);
@@ -172,8 +172,8 @@ function createPathTilesForPlayer(scene, playerIndex, baseX, baseZ, angle, playe
     });
 
     // Marqueurs spéciaux: outermost near base, innermost near circuit
-    if (j === 1) createStartMarker(scene, tileX, 0.12, tileZ, playerColor.hex);
-    if (j === pathLength) createEndMarker(scene, tileX, 0.12, tileZ, playerColor.hex);
+    if (j === 1) createStartMarker(scene, tileX, 0.45, tileZ, playerColor.hex);
+    if (j === pathLength) createEndMarker(scene, tileX, 0.45, tileZ, playerColor.hex);
   }
 }
 
@@ -202,7 +202,7 @@ function createMainCircuitPath(scene, circuitRadius, angleStep, numPlayers) {
         emissiveIntensity: 0.05
       });
       const tile = new THREE.Mesh(tileGeo, tileMat);
-      tile.position.set(tileX, 0.06, tileZ);
+      tile.position.set(tileX, 0.4, tileZ);
       tile.castShadow = true;
       tile.receiveShadow = true;
       scene.add(tile);
