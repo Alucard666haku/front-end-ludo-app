@@ -557,7 +557,7 @@ function createSquareBoard() {
       const { x, z } = toPos(c, r);
       const height = isSpecialTile(c, r) ? 0.18 : 0.12;
       const geom = new THREE.BoxGeometry(TILE * 0.96, height, TILE * 0.96);
-      const color = determineTileColor(c, r);
+      const color = determineTileColor(c, r, SIZE);
       const mat = new THREE.MeshStandardMaterial({
         color,
         metalness: 0.1,
@@ -580,7 +580,7 @@ function createSquareBoard() {
   createCenterDecoration();
 }
 
-function determineTileColor(c, r) {
+function determineTileColor(c, r, SIZE) {
   const numPlayers = gameConfig.numPlayers;
   
   // Déterminer les zones de couleur basées sur le nombre de joueurs
