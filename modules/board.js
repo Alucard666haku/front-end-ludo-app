@@ -220,7 +220,7 @@ function createPawnsForPlayer(scene, playerIndex, baseX, baseZ, baseRadius, play
     
     // Créer le pion
     const pawn = createPawnMesh(playerColor.hex);
-    pawn.position.set(sx, 0.7, sz);
+    pawn.position.set(sx, 1.2, sz);
     scene.add(pawn);
     
     // Pousser le pion dans le tableau global

@@ -11,18 +11,27 @@ export const PLAYER_COLORS = [
 ];
 
 export let gameConfig = {
-  numPlayers: 4,
+  numPlayers: 3,
   pawnsPerPlayer: 4,
   pathLength: 5
 };
 
 export function setupConfigUI() {
   const playerOptions = document.querySelectorAll('.player-option');
+  
+  // Set initial selection to 3 players
+  const defaultOption = document.querySelector('[data-players="3"]');
+  if (defaultOption) {
+    defaultOption.classList.add('selected');
+    gameConfig.numPlayers = 3;
+  }
+  
   playerOptions.forEach(option => {
     option.addEventListener('click', () => {
       playerOptions.forEach(o => o.classList.remove('selected'));
       option.classList.add('selected');
       gameConfig.numPlayers = parseInt(option.dataset.players);
+      console.log('Joueurs sélectionnés:', gameConfig.numPlayers);
     });
   });
 
