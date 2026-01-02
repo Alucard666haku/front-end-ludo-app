@@ -395,22 +395,4 @@ function createCentralSurface(scene, radius) {
   scene.add(surface);
 }
 
-// Create a hovering overlay (ring or torus) above the center for visibility
-function createHoverOverlay(scene, radius) {
-  const ringGeo = new THREE.TorusGeometry(radius, 0.08, 16, 100);
-  const ringMat = new THREE.MeshStandardMaterial({
-    color: 0x60a5fa,
-    emissive: 0x60a5fa,
-    emissiveIntensity: 0.12,
-    metalness: 0.3,
-    roughness: 0.2,
-    transparent: true,
-    opacity: 0.95
-  });
-  const ring = new THREE.Mesh(ringGeo, ringMat);
-  // Orient horizontally and hover above
-  ring.rotation.x = Math.PI / 2;
-  ring.position.y = 0.9;
-  ring.castShadow = false;
-  scene.add(ring);
-}
+// (hover overlay removed - ring generation not used)
