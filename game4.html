@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Ludo 3D Arena - Configurable</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #0f1724 0%, #1a2332 100%);
+      color: #fff;
+      touch-action: none;
+    }
+    
+    #container {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    
+    #container.visible {
+      opacity: 1;
+    }
+    
+    /* Configuration Menu */
+    .config-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 36, 0.98);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(10px);
+    }
+    
+    .config-overlay.hidden {
+      display: none;
+    }
+    
+    .config-panel {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      border: 2px solid rgba(59, 130, 246, 0.3);
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    .config-panel h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      color: #3b82f6;
+      text-align: center;
+    }
+    
+    .config-panel p {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+    
+    .config-group {
+      margin-bottom: 25px;
+    }
+    
+    .config-group label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 600;
+      color: #e2e8f0;
+      font-size: 14px;
+    }
+    
+    .config-group input[type="range"] {
+      width: 100%;
+      padding: 0;
+      height: 8px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(59, 130, 246, 0.3);
+      outline: none;
+      border-radius: 5px;
+      border: none;
+    }
+    
+    .config-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.5);
+    }
+    
+    .config-group input[type="range"]::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.5);
+    }
+    
+    .range-value {
+      display: inline-block;
+      margin-left: 10px;
+      color: #3b82f6;
+      font-weight: 700;
+      font-size: 18px;
+    }
+    
+    .player-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .player-option {
+      padding: 15px;
+      border-radius: 10px;
+      border: 2px solid rgba(59, 130, 246, 0.3);
+      background: rgba(15, 23, 36, 0.6);
+      cursor: pointer;
+      text-align: center;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .player-option:hover {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    .player-option.selected {
+      border-color: #3b82f6;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+    }
+    
+    .start-btn {
+      width: 100%;
+      padding: 15px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #fff;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      margin-top: 30px;
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+      transition: all 0.3s ease;
+    }
+    
+    .start-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(16, 185, 129, 0.6);
+    }
+    
+    .start-btn:active {
+      transform: translateY(0);
+    }
+    
+    .ui-panel {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      background: rgba(15, 23, 36, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 12px;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      max-width: calc(100vw - 20px);
+    }
+    
+    .ui-panel h2 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #3b82f6;
+      font-weight: 700;
+    }
+    
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    button {
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: #fff;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    button:active {
+      transform: scale(0.95);
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+    }
+    
+    .dice-btn {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .dice-btn:disabled {
+      background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    
+    .info-panel {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      z-index: 100;
+      background: rgba(15, 23, 36, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 12px 16px;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      max-width: calc(100vw - 20px);
+    }
+    
+    .player-turn {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .dice-result {
+      font-size: 36px;
+      text-align: center;
+      margin: 8px 0;
+      font-weight: 700;
+      text-shadow: 0 0 20px currentColor;
+    }
+    
+    .pawn-selector {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-top: 10px;
+    }
+    
+    .pawn-btn {
+      padding: 8px;
+      font-size: 11px;
+      border-radius: 6px;
+    }
+    
+    .color-red { color: #ef4444; }
+    .color-yellow { color: #fbbf24; }
+    .color-green { color: #22c55e; }
+    .color-blue { color: #3b82f6; }
+    .color-violet { color: #a855f7; }
+    .color-orange { color: #f97316; }
+    .color-pink { color: #ec4899; }
+    .color-cyan { color: #06b6d4; }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-2px); }
+      75% { transform: translateX(2px); }
+    }
+    
+    .shake {
+      animation: shake 0.3s ease-in-out;
+    }
+    
+    @media (max-width: 768px) {
+      .config-panel {
+        padding: 25px;
+      }
+      
+      .config-panel h1 {
+        font-size: 22px;
+      }
+      
+      .player-selector {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="config-overlay" id="configOverlay">
+    <div class="config-panel">
+      <h1>🎲 Configuration du Ludo 3D</h1>
+      <p>Personnalisez votre partie</p>
+      
+      <div class="config-group">
+        <label>Nombre de Joueurs (3-8)</label>
+        <div class="player-selector" id="playerSelector">
+          <div class="player-option" data-players="3">3 Joueurs<br>△ Triangle</div>
+          <div class="player-option selected" data-players="4">4 Joueurs<br>□ Carré</div>
+          <div class="player-option" data-players="5">5 Joueurs<br>⬠ Pentagon</div>
+          <div class="player-option" data-players="6">6 Joueurs<br>⬡ Hexagone</div>
+          <div class="player-option" data-players="7">7 Joueurs<br>Heptagone</div>
+          <div class="player-option" data-players="8">8 Joueurs<br>Octogone</div>
+        </div>
+      </div>
+      
+      <div class="config-group">
+        <label>Nombre de Pions par Joueur <span class="range-value" id="pawnsValue">4</span></label>
+        <input type="range" id="pawnsSlider" min="2" max="6" value="4" step="1">
+      </div>
+      
+      <div class="config-group">
+        <label>Longueur du Chemin Coloré <span class="range-value" id="pathValue">5</span></label>
+        <input type="range" id="pathSlider" min="3" max="10" value="5" step="1">
+      </div>
+      
+      <button class="start-btn" id="startGameBtn">🚀 Commencer la Partie</button>
+    </div>
+  </div>
+  
+  <div class="ui-panel">
+    <h2>🎮 Contrôles</h2>
+    <div class="button-group">
+      <button id="resetBtn">🔄 Vue</button>
+      <button id="diceBtn" class="dice-btn">🎲 Lancer Dé</button>
+      <button id="reconfigBtn">⚙️ Reconfigurer</button>
+    </div>
+  </div>
+  
+  <div class="info-panel">
+    <div class="player-turn">Tour: <span id="currentPlayer">-</span></div>
+    <div class="dice-result" id="diceValue">-</div>
+    <div id="pawnSelector" class="pawn-selector"></div>
+  </div>
+  
+  <div id="container"></div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.152.2/build/three.module.js"
+      }
+    }
+  </script>
+
+  <script type="module" src="game.js"></script>
+</body>
+</html>

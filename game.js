@@ -1,3 +1,4 @@
+// configurable-ludo-game.js
 import * as THREE from 'three';
 import { OrbitControls } from 'https://unpkg.com/three@0.152.2/examples/jsm/controls/OrbitControls.js';
 
@@ -26,6 +27,8 @@ let pawns = [];
 let currentPlayerIndex = 0;
 let diceValue = 0;
 let gameState = 'waiting';
+let pathTiles = [];
+let boardSize = 0;
 
 // Configuration UI
 const playerOptions = document.querySelectorAll('.player-option');
@@ -58,12 +61,21 @@ document.getElementById('reconfigBtn').addEventListener('click', () => {
 });
 
 function initGame() {
+  // Nettoyer la scène si elle existe déjà
+  if (scene) {
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+  }
+  
   scene = new THREE.Scene();
   scene.fog = new THREE.Fog(0x0f1724, 30, 100);
   
   camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
   
-  const cameraDistance = 15 + gameConfig.numPlayers * 2;
+  // Calculer la taille du plateau basée sur le nombre de joueurs
+  boardSize = 10 + gameConfig.numPlayers * 1.5 + gameConfig.pathLength * 0.8;
+  const cameraDistance = boardSize * 1.8;
   camera.position.set(0, cameraDistance * 1.2, cameraDistance);
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -78,8 +90,8 @@ function initGame() {
   controls.dampingFactor = 0.05;
   controls.target.set(0, 0, 0);
   controls.maxPolarAngle = Math.PI / 2.2;
-  controls.minDistance = 10;
-  controls.maxDistance = cameraDistance * 2;
+  controls.minDistance = boardSize * 0.8;
+  controls.maxDistance = boardSize * 3;
   controls.touches = {
     ONE: THREE.TOUCH.ROTATE,
     TWO: THREE.TOUCH.DOLLY_PAN
@@ -93,31 +105,30 @@ function initGame() {
 }
 
 function setupLights() {
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
 
   const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
-  mainLight.position.set(10, 25, 10);
+  mainLight.position.set(boardSize / 2, boardSize, boardSize / 2);
   mainLight.castShadow = true;
   mainLight.shadow.mapSize.width = 2048;
   mainLight.shadow.mapSize.height = 2048;
   mainLight.shadow.camera.near = 0.5;
-  mainLight.shadow.camera.far = 50;
-  mainLight.shadow.camera.left = -30;
-  mainLight.shadow.camera.right = 30;
-  mainLight.shadow.camera.top = 30;
-  mainLight.shadow.camera.bottom = -30;
+  mainLight.shadow.camera.far = boardSize * 2;
+  mainLight.shadow.camera.left = -boardSize;
+  mainLight.shadow.camera.right = boardSize;
+  mainLight.shadow.camera.top = boardSize;
+  mainLight.shadow.camera.bottom = -boardSize;
   scene.add(mainLight);
 
   const fillLight = new THREE.DirectionalLight(0x4a90e2, 0.3);
-  fillLight.position.set(-10, 15, -10);
+  fillLight.position.set(-boardSize / 2, boardSize / 2, -boardSize / 2);
   scene.add(fillLight);
 }
 
 function createBoard() {
-  const boardSize = 12 + gameConfig.pathLength * 2;
-  
-  const floorGeo = new THREE.PlaneGeometry(boardSize * 2.5, boardSize * 2.5);
+  // Sol
+  const floorGeo = new THREE.PlaneGeometry(boardSize * 3, boardSize * 3);
   const floorMat = new THREE.MeshStandardMaterial({
     color: 0x0a1220,
     metalness: 0.2,
@@ -130,18 +141,20 @@ function createBoard() {
   scene.add(floor);
 
   createPolygonBoard();
+  createCenterDecoration();
 }
 
 function createPolygonBoard() {
   const numPlayers = gameConfig.numPlayers;
-  const radius = 8 + gameConfig.pathLength * 0.5;
+  const boardRadius = boardSize * 0.8;
   const angleStep = (Math.PI * 2) / numPlayers;
   
+  // Base du plateau en forme de polygone
   const shape = new THREE.Shape();
   for (let i = 0; i < numPlayers; i++) {
     const angle = i * angleStep - Math.PI / 2;
-    const x = Math.cos(angle) * radius;
-    const z = Math.sin(angle) * radius;
+    const x = Math.cos(angle) * boardRadius;
+    const z = Math.sin(angle) * boardRadius;
     if (i === 0) shape.moveTo(x, z);
     else shape.lineTo(x, z);
   }
@@ -168,8 +181,9 @@ function createPolygonBoard() {
   board.receiveShadow = true;
   scene.add(board);
 
+  // Bordure
   const borderShape = new THREE.Shape();
-  const borderRadius = radius + 0.3;
+  const borderRadius = boardRadius + 0.3;
   for (let i = 0; i < numPlayers; i++) {
     const angle = i * angleStep - Math.PI / 2;
     const x = Math.cos(angle) * borderRadius;
@@ -191,87 +205,197 @@ function createPolygonBoard() {
   border.castShadow = true;
   scene.add(border);
 
-  createPlayerBases(radius, angleStep);
-  createCenterDecoration();
+  // Créer les bases et les chemins
+  createPlayerBases(boardRadius, angleStep);
 }
 
 function createPlayerBases(radius, angleStep) {
+  pathTiles = []; // Réinitialiser les tuiles de chemin
+  
   for (let i = 0; i < gameConfig.numPlayers; i++) {
     const angle = i * angleStep - Math.PI / 2;
-    const baseRadius = 2.5;
-    const baseDistance = radius * 0.7;
-    const x = Math.cos(angle) * baseDistance;
-    const z = Math.sin(angle) * baseDistance;
-    
     const playerColor = PLAYER_COLORS[i];
     
-    const baseGeo = new THREE.CylinderGeometry(baseRadius, baseRadius, 0.6, 32);
-    const baseMat = new THREE.MeshStandardMaterial({
-      color: playerColor.hex,
-      roughness: 0.4,
-      metalness: 0.2
-    });
-    const base = new THREE.Mesh(baseGeo, baseMat);
-    base.position.set(x, 0.3, z);
-    base.castShadow = true;
-    scene.add(base);
-
-    const baseLight = new THREE.PointLight(playerColor.hex, 0.3, 8);
-    baseLight.position.set(x, 1, z);
-    scene.add(baseLight);
-
-    // Créer les tuiles de chemin coloré
-    createPathTiles(x, z, angle, playerColor.hex, i);
-
-    createPawnsForPlayer(i, x, z, baseRadius, playerColor);
+    // Position de la base
+    const baseRadius = 2.5;
+    const baseDistance = radius * 0.6;
+    const baseX = Math.cos(angle) * baseDistance;
+    const baseZ = Math.sin(angle) * baseDistance;
+    
+    // Créer la base
+    createBase(baseX, baseZ, baseRadius, playerColor.hex);
+    
+    // Créer les tuiles de chemin
+    createPathTilesForPlayer(i, baseX, baseZ, angle, playerColor);
+    
+    // Créer les pions
+    createPawnsForPlayer(i, baseX, baseZ, baseRadius, playerColor);
   }
 }
 
-function createPathTiles(baseX, baseZ, baseAngle, color, playerIndex) {
+function createBase(x, z, radius, color) {
+  const baseGeo = new THREE.CylinderGeometry(radius, radius, 0.6, 32);
+  const baseMat = new THREE.MeshStandardMaterial({
+    color: color,
+    roughness: 0.4,
+    metalness: 0.2
+  });
+  const base = new THREE.Mesh(baseGeo, baseMat);
+  base.position.set(x, 0.3, z);
+  base.castShadow = true;
+  scene.add(base);
+
+  const baseLight = new THREE.PointLight(color, 0.3, 8);
+  baseLight.position.set(x, 1, z);
+  scene.add(baseLight);
+}
+
+function createPathTilesForPlayer(playerIndex, baseX, baseZ, angle, playerColor) {
   const pathLength = gameConfig.pathLength;
   const tileSize = 0.9;
-  const tileHeight = 0.18;
-  const spacing = 1.1;
+  const spacing = 1.2;
   
-  console.log(`Creating ${pathLength} tiles for player ${playerIndex}`);
-  
+  // Créer le chemin depuis la base vers l'extérieur
   for (let j = 1; j <= pathLength; j++) {
-    // Distance depuis la base
-    const dist = 3.5 + j * spacing;
+    const distance = 3.5 + (j * spacing);
+    const tileX = baseX + Math.cos(angle) * distance;
+    const tileZ = baseZ + Math.sin(angle) * distance;
     
-    // Position de la tuile
-    const tileX = baseX + Math.cos(baseAngle) * dist;
-    const tileZ = baseZ + Math.sin(baseAngle) * dist;
-    
-    // Créer la géométrie de la tuile avec des bords arrondis
-    const tileGeo = new THREE.BoxGeometry(tileSize, tileHeight, tileSize);
-    
-    // Matériau avec la couleur du joueur
+    // Tuile principale
+    const tileGeo = new THREE.BoxGeometry(tileSize, 0.15, tileSize);
     const tileMat = new THREE.MeshStandardMaterial({
-      color: color,
+      color: playerColor.hex,
       metalness: 0.2,
-      roughness: 0.5
+      roughness: 0.5,
+      emissive: playerColor.hex,
+      emissiveIntensity: 0.1
     });
-    
     const tile = new THREE.Mesh(tileGeo, tileMat);
-    tile.position.set(tileX, tileHeight / 2, tileZ);
+    tile.position.set(tileX, 0.08, tileZ);
     tile.castShadow = true;
     tile.receiveShadow = true;
     scene.add(tile);
     
-    // Ajouter un marqueur numérique sur la tuile
-    if (j % 2 === 0) {
-      const markerGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.05, 16);
-      const markerMat = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
-        metalness: 0.6,
-        roughness: 0.3
-      });
-      const marker = new THREE.Mesh(markerGeo, markerMat);
-      marker.position.set(tileX, tileHeight + 0.03, tileZ);
-      marker.castShadow = true;
-      scene.add(marker);
+    // Bordure de la tuile
+    const borderGeo = new THREE.BoxGeometry(tileSize + 0.05, 0.05, tileSize + 0.05);
+    const borderMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      metalness: 0.5,
+      roughness: 0.3
+    });
+    const border = new THREE.Mesh(borderGeo, borderMat);
+    border.position.set(0, -0.1, 0);
+    tile.add(border);
+    
+    // Numéro sur la tuile
+    const numberGeo = new THREE.PlaneGeometry(0.3, 0.3);
+    const numberMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.9
+    });
+    const number = new THREE.Mesh(numberGeo, numberMat);
+    number.position.set(0, 0.09, 0);
+    number.rotation.x = -Math.PI / 2;
+    tile.add(number);
+    
+    // Stocker la tuile pour référence
+    pathTiles.push({
+      mesh: tile,
+      playerIndex: playerIndex,
+      position: { x: tileX, z: tileZ },
+      order: j
+    });
+    
+    // Ajouter un marqueur spécial pour la première tuile
+    if (j === 1) {
+      createStartMarker(tileX, 0.15, tileZ, playerColor.hex);
     }
+    
+    // Ajouter un marqueur spécial pour la dernière tuile
+    if (j === pathLength) {
+      createEndMarker(tileX, 0.15, tileZ, playerColor.hex);
+    }
+  }
+  
+  // Créer les tuiles de connexion vers les autres bases
+  if (gameConfig.numPlayers >= 4) {
+    createConnectionTiles(baseX, baseZ, angle, playerColor.hex);
+  }
+}
+
+function createStartMarker(x, y, z, color) {
+  const markerGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.05, 8);
+  const markerMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    emissive: color,
+    emissiveIntensity: 0.3
+  });
+  const marker = new THREE.Mesh(markerGeo, markerMat);
+  marker.position.set(x, y, z);
+  scene.add(marker);
+}
+
+function createEndMarker(x, y, z, color) {
+  const starShape = new THREE.Shape();
+  const outerRadius = 0.2;
+  const innerRadius = 0.1;
+  for (let i = 0; i < 10; i++) {
+    const radius = i % 2 === 0 ? outerRadius : innerRadius;
+    const angle = (i / 10) * Math.PI * 2;
+    const px = Math.cos(angle) * radius;
+    const py = Math.sin(angle) * radius;
+    if (i === 0) starShape.moveTo(px, py);
+    else starShape.lineTo(px, py);
+  }
+  starShape.closePath();
+
+  const starGeo = new THREE.ShapeGeometry(starShape);
+  const starMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    emissive: color,
+    emissiveIntensity: 0.5
+  });
+  const star = new THREE.Mesh(starGeo, starMat);
+  star.position.set(x, y, z);
+  star.rotation.x = -Math.PI / 2;
+  scene.add(star);
+}
+
+function createConnectionTiles(baseX, baseZ, angle, color) {
+  // Créer des tuiles de connexion pour former un chemin continu
+  const tileSize = 0.8;
+  const connectionLength = Math.floor(gameConfig.pathLength / 2);
+  
+  // Tuiles tournantes à mi-chemin
+  for (let k = 1; k <= connectionLength; k++) {
+    const offsetAngle = angle + (Math.PI / gameConfig.numPlayers) * (k / connectionLength);
+    const distance = 5 + k * 1.5;
+    const tileX = baseX + Math.cos(offsetAngle) * distance;
+    const tileZ = baseZ + Math.sin(offsetAngle) * distance;
+    
+    const tileGeo = new THREE.BoxGeometry(tileSize, 0.1, tileSize);
+    const tileMat = new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,
+      metalness: 0.1,
+      roughness: 0.6
+    });
+    const tile = new THREE.Mesh(tileGeo, tileMat);
+    tile.position.set(tileX, 0.06, tileZ);
+    tile.castShadow = true;
+    tile.receiveShadow = true;
+    scene.add(tile);
+    
+    // Bordure spéciale pour les tuiles de connexion
+    const borderGeo = new THREE.BoxGeometry(tileSize + 0.1, 0.03, tileSize + 0.1);
+    const borderMat = new THREE.MeshStandardMaterial({
+      color: color,
+      emissive: color,
+      emissiveIntensity: 0.2
+    });
+    const border = new THREE.Mesh(borderGeo, borderMat);
+    border.position.set(0, -0.065, 0);
+    tile.add(border);
   }
 }
 
@@ -285,9 +409,10 @@ function createPawnsForPlayer(playerIndex, baseX, baseZ, baseRadius, playerColor
     const sx = baseX + Math.cos(angle) * spawnRadius;
     const sz = baseZ + Math.sin(angle) * spawnRadius;
     
+    // Marqueur sous le pion
     const circleGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.08, 32);
     const circleMat = new THREE.MeshStandardMaterial({
-      color: 0x1e293b,
+      color: 0x347589,
       metalness: 0.5,
       roughness: 0.3
     });
@@ -296,10 +421,12 @@ function createPawnsForPlayer(playerIndex, baseX, baseZ, baseRadius, playerColor
     mark.castShadow = true;
     scene.add(mark);
 
+    // Créer le pion
     const pawn = createPawn(playerColor.hex);
     pawn.position.set(sx, 0.7, sz);
     scene.add(pawn);
     
+    // Stocker les informations du pion
     pawns.push({
       mesh: pawn,
       playerIndex: playerIndex,
@@ -308,7 +435,9 @@ function createPawnsForPlayer(playerIndex, baseX, baseZ, baseRadius, playerColor
       cssClass: playerColor.cssClass,
       home: { x: sx, z: sz },
       id: playerIndex * pawnsPerPlayer + i,
-      inPlay: false
+      inPlay: false,
+      currentTile: null,
+      pathProgress: 0
     });
   }
 }
@@ -316,9 +445,10 @@ function createPawnsForPlayer(playerIndex, baseX, baseZ, baseRadius, playerColor
 function createPawn(color) {
   const group = new THREE.Group();
 
+  // Corps du pion
   const bodyGeo = new THREE.CylinderGeometry(0.28, 0.36, 0.65, 32);
   const bodyMat = new THREE.MeshStandardMaterial({
-    color,
+    color: color,
     metalness: 0.3,
     roughness: 0.5
   });
@@ -326,31 +456,44 @@ function createPawn(color) {
   body.castShadow = true;
   group.add(body);
 
+  // Tête du pion
   const headGeo = new THREE.SphereGeometry(0.22, 32, 32);
   const head = new THREE.Mesh(headGeo, bodyMat);
   head.position.y = 0.5;
   head.castShadow = true;
   group.add(head);
 
+  // Détail sur la tête
+  const detailGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.05, 16);
+  const detailMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    metalness: 0.8,
+    roughness: 0.2
+  });
+  const detail = new THREE.Mesh(detailGeo, detailMat);
+  detail.position.y = 0.55;
+  group.add(detail);
+
   return group;
 }
 
 function createCenterDecoration() {
   const holeDepth = 0.8;
-  const holeRadius = 1.2;
+  const holeRadius = 1.5;
   
+  // Trou central
   const holeGeo = new THREE.CylinderGeometry(holeRadius, holeRadius * 0.9, holeDepth, 32);
   const holeMat = new THREE.MeshStandardMaterial({
     color: 0x000000,
     metalness: 0.1,
-    roughness: 0.95,
-    emissive: 0x000000
+    roughness: 0.95
   });
   const hole = new THREE.Mesh(holeGeo, holeMat);
   hole.position.set(0, -holeDepth / 2 + 0.02, 0);
   hole.receiveShadow = true;
   scene.add(hole);
 
+  // Anneau autour du trou
   const shadowRingGeo = new THREE.CylinderGeometry(holeRadius + 0.1, holeRadius, 0.1, 32);
   const shadowRingMat = new THREE.MeshStandardMaterial({
     color: 0x0a0a0a,
@@ -361,6 +504,31 @@ function createCenterDecoration() {
   shadowRing.position.set(0, 0.02, 0);
   scene.add(shadowRing);
 
+  // Triangles colorés autour du centre
+  const numTriangles = gameConfig.numPlayers;
+  const triAngleStep = (Math.PI * 2) / numTriangles;
+  const triSize = 1.2;
+  
+  for (let i = 0; i < numTriangles; i++) {
+    const angle = i * triAngleStep;
+    const triX = Math.cos(angle) * (holeRadius + 0.8);
+    const triZ = Math.sin(angle) * (holeRadius + 0.8);
+    const playerColor = PLAYER_COLORS[i % PLAYER_COLORS.length];
+    
+    const triGeo = new THREE.CylinderGeometry(0, triSize, 0.12, 3);
+    const triMat = new THREE.MeshStandardMaterial({
+      color: playerColor.hex,
+      metalness: 0.4,
+      roughness: 0.6
+    });
+    const tri = new THREE.Mesh(triGeo, triMat);
+    tri.position.set(triX, 0.08, triZ);
+    tri.rotation.y = angle + Math.PI;
+    tri.castShadow = true;
+    scene.add(tri);
+  }
+
+  // Lumière centrale
   const rimLight = new THREE.PointLight(0x3b82f6, 0.2, 5);
   rimLight.position.set(0, 0.1, 0);
   scene.add(rimLight);
@@ -370,11 +538,22 @@ function animate() {
   requestAnimationFrame(animate);
   const elapsed = performance.now() * 0.001;
 
+  // Animation des pions
   pawns.forEach((p, i) => {
     if (!p.animating) {
-      p.mesh.position.y = p.inPlay ? p.mesh.position.y : 0.7 + Math.sin(elapsed * 2 + i) * 0.03;
+      // Pions à la maison oscillent légèrement
+      if (!p.inPlay) {
+        p.mesh.position.y = 0.7 + Math.sin(elapsed * 2 + i) * 0.03;
+      }
+      // Rotation continue
       p.mesh.rotation.y = elapsed * 0.5 + i;
     }
+  });
+
+  // Animation des tuiles de chemin
+  pathTiles.forEach((tile, i) => {
+    const time = elapsed * 2 + i * 0.1;
+    tile.mesh.children[0].position.y = -0.1 + Math.sin(time) * 0.02;
   });
 
   controls.update();
@@ -389,7 +568,7 @@ function setupEventListeners() {
   });
 
   document.getElementById('resetBtn').addEventListener('click', () => {
-    const cameraDistance = 15 + gameConfig.numPlayers * 2;
+    const cameraDistance = boardSize * 1.8;
     camera.position.set(0, cameraDistance * 1.2, cameraDistance);
     controls.target.set(0, 0, 0);
   });
@@ -400,6 +579,7 @@ function setupEventListeners() {
     const btn = document.getElementById('diceBtn');
     btn.disabled = true;
     
+    // Animation de lancer de dé
     let rolls = 0;
     const rollInterval = setInterval(() => {
       diceValue = Math.floor(Math.random() * 6) + 1;
@@ -439,47 +619,50 @@ function movePawn(pawn) {
   document.getElementById('pawnSelector').innerHTML = '';
   
   if (!pawn.inPlay && diceValue === 6) {
-    const startPos = getStartPosition(pawn.playerIndex);
-    animatePawnMovement(pawn, startPos.x, startPos.z, () => {
-      pawn.inPlay = true;
+    // Sortir le pion de la maison
+    const playerTiles = pathTiles.filter(t => t.playerIndex === pawn.playerIndex);
+    if (playerTiles.length > 0) {
+      const firstTile = playerTiles[0];
+      animatePawnMovement(pawn, firstTile.position.x, firstTile.position.z, () => {
+        pawn.inPlay = true;
+        pawn.currentTile = firstTile;
+        pawn.pathProgress = 1;
+        nextTurn();
+      });
+    } else {
       nextTurn();
-    });
+    }
   } else if (pawn.inPlay) {
-    const currentPos = pawn.mesh.position;
-    const angle = getPlayerAngle(pawn.playerIndex);
-    const moveDistance = diceValue * 1.1;
-    const newX = currentPos.x + Math.cos(angle) * moveDistance;
-    const newZ = currentPos.z + Math.sin(angle) * moveDistance;
-    
-    animatePawnMovement(pawn, newX, newZ, () => {
+    // Avancer sur le chemin
+    const playerTiles = pathTiles.filter(t => t.playerIndex === pawn.playerIndex);
+    if (playerTiles.length > 0) {
+      const currentIndex = pawn.currentTile ? 
+        playerTiles.findIndex(t => t === pawn.currentTile) : 0;
+      const newIndex = Math.min(currentIndex + diceValue, playerTiles.length - 1);
+      const targetTile = playerTiles[newIndex];
+      
+      animatePawnMovement(pawn, targetTile.position.x, targetTile.position.z, () => {
+        pawn.currentTile = targetTile;
+        pawn.pathProgress = newIndex + 1;
+        
+        // Vérifier si le pion est arrivé à la fin
+        if (newIndex === playerTiles.length - 1) {
+          // Le pion est arrivé !
+          celebratePawnArrival(pawn);
+        }
+        
+        nextTurn();
+      });
+    } else {
       nextTurn();
-    });
+    }
   } else {
+    // Ne peut pas bouger
     const diceDisplay = document.getElementById('diceValue');
     diceDisplay.classList.add('shake');
     setTimeout(() => diceDisplay.classList.remove('shake'), 300);
     nextTurn();
   }
-}
-
-function getPlayerAngle(playerIndex) {
-  const angleStep = (Math.PI * 2) / gameConfig.numPlayers;
-  return playerIndex * angleStep - Math.PI / 2;
-}
-
-function getStartPosition(playerIndex) {
-  const angle = getPlayerAngle(playerIndex);
-  const radius = 8 + gameConfig.pathLength * 0.5;
-  const baseDistance = radius * 0.7;
-  const startDist = 3.5;
-  
-  const baseX = Math.cos(angle) * baseDistance;
-  const baseZ = Math.sin(angle) * baseDistance;
-  
-  return {
-    x: baseX + Math.cos(angle) * startDist,
-    z: baseZ + Math.sin(angle) * startDist
-  };
 }
 
 function animatePawnMovement(pawn, targetX, targetZ, callback) {
@@ -513,6 +696,35 @@ function animatePawnMovement(pawn, targetX, targetZ, callback) {
   move();
 }
 
+function celebratePawnArrival(pawn) {
+  // Effet visuel quand un pion arrive à destination
+  const light = new THREE.PointLight(pawn.colorHex, 1, 5);
+  light.position.set(pawn.mesh.position.x, 2, pawn.mesh.position.z);
+  scene.add(light);
+  
+  // Animation de saut
+  const startY = pawn.mesh.position.y;
+  const jumpDuration = 1000;
+  const startTime = Date.now();
+  
+  function jump() {
+    const elapsed = Date.now() - startTime;
+    const progress = Math.min(elapsed / jumpDuration, 1);
+    const jumpProgress = Math.sin(progress * Math.PI * 4) * 0.5;
+    
+    pawn.mesh.position.y = startY + jumpProgress;
+    pawn.mesh.rotation.y += 0.1;
+    
+    if (progress < 1) {
+      requestAnimationFrame(jump);
+    } else {
+      pawn.mesh.position.y = startY;
+      scene.remove(light);
+    }
+  }
+  jump();
+}
+
 function nextTurn() {
   if (diceValue !== 6) {
     currentPlayerIndex = (currentPlayerIndex + 1) % gameConfig.numPlayers;
@@ -532,6 +744,7 @@ function updatePlayerTurn() {
   playerSpan.className = currentPlayer.cssClass;
 }
 
+// Fonctions utilitaires
 function rgbToHex(hex) {
   return '#' + hex.toString(16).padStart(6, '0');
 }
@@ -542,3 +755,10 @@ function darkenColor(hex) {
   const b = hex & 0xff;
   return '#' + ((r * 0.7) << 16 | (g * 0.7) << 8 | (b * 0.7)).toString(16).padStart(6, '0');
 }
+
+// Exporter pour utilisation
+export {
+  initGame,
+  gameConfig,
+  PLAYER_COLORS
+};
