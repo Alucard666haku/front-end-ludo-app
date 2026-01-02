@@ -437,12 +437,16 @@ document.getElementById('reconfigBtn').addEventListener('click', () => {
 
 function initGame() {
   scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x0f1724, 30, 100);
+  scene.fog = new THREE.Fog(0x0f1724, 30, 80);
   
   camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
   
-  const cameraDistance = 15 + gameConfig.numPlayers * 2;
-  camera.position.set(0, cameraDistance * 1.2, cameraDistance);
+  const isMobile = window.innerWidth < 768;
+  if (isMobile) {
+    camera.position.set(0, 32, 25);
+  } else {
+    camera.position.set(0, 28, 22);
+  }
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -456,8 +460,8 @@ function initGame() {
   controls.dampingFactor = 0.05;
   controls.target.set(0, 0, 0);
   controls.maxPolarAngle = Math.PI / 2.2;
-  controls.minDistance = 10;
-  controls.maxDistance = cameraDistance * 2;
+  controls.minDistance = isMobile ? 18 : 15;
+  controls.maxDistance = isMobile ? 60 : 50;
   controls.touches = {
     ONE: THREE.TOUCH.ROTATE,
     TWO: THREE.TOUCH.DOLLY_PAN
@@ -493,9 +497,10 @@ function setupLights() {
 }
 
 function createBoard() {
-  const boardSize = 12 + gameConfig.pathLength * 2;
+  const SIZE = 15;
+  const TILE = 1;
   
-  const floorGeo = new THREE.PlaneGeometry(boardSize * 2.5, boardSize * 2.5);
+  const floorGeo = new THREE.PlaneGeometry(SIZE * TILE + 10, SIZE * TILE + 10);
   const floorMat = new THREE.MeshStandardMaterial({
     color: 0x0a1220,
     metalness: 0.2,
@@ -507,164 +512,204 @@ function createBoard() {
   floor.receiveShadow = true;
   scene.add(floor);
 
-  createPolygonBoard();
-}
-
-function createPolygonBoard() {
-  const numPlayers = gameConfig.numPlayers;
-  const radius = 8 + gameConfig.pathLength * 0.5;
-  const angleStep = (Math.PI * 2) / numPlayers;
-  
-  const shape = new THREE.Shape();
-  for (let i = 0; i < numPlayers; i++) {
-    const angle = i * angleStep - Math.PI / 2;
-    const x = Math.cos(angle) * radius;
-    const z = Math.sin(angle) * radius;
-    if (i === 0) shape.moveTo(x, z);
-    else shape.lineTo(x, z);
-  }
-  shape.closePath();
-
-  const extrudeSettings = {
-    depth: 0.8,
-    bevelEnabled: true,
-    bevelThickness: 0.1,
-    bevelSize: 0.1,
-    bevelSegments: 3
-  };
-
-  const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-  const material = new THREE.MeshStandardMaterial({
+  // Base du plateau
+  const boardBase = new THREE.Group();
+  const baseGeo = new THREE.BoxGeometry(SIZE * TILE + 1, 0.8, SIZE * TILE + 1);
+  const baseMat = new THREE.MeshStandardMaterial({
     color: 0x1e293b,
     metalness: 0.3,
     roughness: 0.7
   });
-  const board = new THREE.Mesh(geometry, material);
-  board.rotation.x = -Math.PI / 2;
-  board.position.y = -0.4;
-  board.castShadow = true;
-  board.receiveShadow = true;
-  scene.add(board);
+  const base = new THREE.Mesh(baseGeo, baseMat);
+  base.position.y = -0.4;
+  base.castShadow = true;
+  base.receiveShadow = true;
+  boardBase.add(base);
 
-  const borderShape = new THREE.Shape();
-  const borderRadius = radius + 0.3;
-  for (let i = 0; i < numPlayers; i++) {
-    const angle = i * angleStep - Math.PI / 2;
-    const x = Math.cos(angle) * borderRadius;
-    const z = Math.sin(angle) * borderRadius;
-    if (i === 0) borderShape.moveTo(x, z);
-    else borderShape.lineTo(x, z);
-  }
-  borderShape.closePath();
-
-  const borderGeo = new THREE.ExtrudeGeometry(borderShape, { depth: 0.3 });
+  // Bordure
+  const borderGeo = new THREE.BoxGeometry(SIZE * TILE + 1.2, 0.3, SIZE * TILE + 1.2);
   const borderMat = new THREE.MeshStandardMaterial({
     color: 0xfbbf24,
     metalness: 0.8,
     roughness: 0.2
   });
   const border = new THREE.Mesh(borderGeo, borderMat);
-  border.rotation.x = -Math.PI / 2;
   border.position.y = -0.05;
   border.castShadow = true;
-  scene.add(border);
+  boardBase.add(border);
+  scene.add(boardBase);
 
-  createPlayerBases(radius, angleStep);
+  createGameTiles(SIZE, TILE);
+  createPlayerBases(SIZE, TILE);
   createCenterDecoration();
 }
 
-function createPlayerBases(radius, angleStep) {
-  for (let i = 0; i < gameConfig.numPlayers; i++) {
-    const angle = i * angleStep - Math.PI / 2;
-    const baseRadius = 2.5;
-    const baseDistance = radius * 0.7;
-    const x = Math.cos(angle) * baseDistance;
-    const z = Math.sin(angle) * baseDistance;
-    
-    const playerColor = PLAYER_COLORS[i];
-    
-    const baseGeo = new THREE.CylinderGeometry(baseRadius, baseRadius, 0.6, 32);
-    const baseMat = new THREE.MeshStandardMaterial({
-      color: playerColor.hex,
+function toPos(col, row) {
+  const SIZE = 15;
+  const TILE = 1;
+  const x = (col - (SIZE + 1) / 2) * TILE;
+  const z = (row - (SIZE + 1) / 2) * TILE;
+  return { x, z };
+}
+
+function determineTileColor(c, r) {
+  const COLORS = {
+    red: 0xef4444,
+    yellow: 0xfbbf24,
+    green: 0x22c55e,
+    blue: 0x3b82f6,
+    path: 0xf8fafc,
+    dark: 0x1e293b
+  };
+  
+  if (c >= 1 && c <= 6 && r >= 1 && r <= 6) return COLORS.red;
+  if (c >= 10 && c <= 15 && r >= 1 && r <= 6) return COLORS.yellow;
+  if (c >= 1 && c <= 6 && r >= 10 && r <= 15) return COLORS.green;
+  if (c >= 10 && c <= 15 && r >= 10 && r <= 15) return COLORS.blue;
+  if (c >= 7 && c <= 9 && r >= 7 && r <= 9) return 0xffffff;
+
+  if (r === 8 && c >= 2 && c <= 6) return 0xfecaca;
+  if (r === 8 && c >= 10 && c <= 14) return 0xfef3c7;
+  if (c === 8 && r >= 10 && r <= 14) return 0xd1fae5;
+  if (c === 8 && r >= 2 && r <= 6) return 0xdbeafe;
+
+  return COLORS.path;
+}
+
+function isSpecialTile(c, r) {
+  return (c === 7 && r === 2) || (c === 2 && r === 9) ||
+         (c === 14 && r === 7) || (c === 9 && r === 14);
+}
+
+function isStarTile(c, r) {
+  return (c === 7 && r === 3) || (c === 3 && r === 9) ||
+         (c === 13 && r === 7) || (c === 9 && r === 13) ||
+         (c === 2 && r === 7) || (c === 7 && r === 2) ||
+         (c === 14 && r === 9) || (c === 9 && r === 14);
+}
+
+function createGameTiles(SIZE, TILE) {
+  const tileGroup = new THREE.Group();
+  for (let r = 1; r <= SIZE; r++) {
+    for (let c = 1; c <= SIZE; c++) {
+      const { x, z } = toPos(c, r);
+      const height = isSpecialTile(c, r) ? 0.18 : 0.12;
+      const geom = new THREE.BoxGeometry(TILE * 0.96, height, TILE * 0.96);
+      const color = determineTileColor(c, r);
+      const mat = new THREE.MeshStandardMaterial({
+        color,
+        metalness: 0.1,
+        roughness: 0.6
+      });
+      const tile = new THREE.Mesh(geom, mat);
+      tile.position.set(x, height / 2, z);
+      tile.castShadow = true;
+      tile.receiveShadow = true;
+      tileGroup.add(tile);
+
+      if (isStarTile(c, r)) {
+        createStarMarker(x, height + 0.01, z, tileGroup);
+      }
+    }
+  }
+  scene.add(tileGroup);
+}
+
+function createStarMarker(x, y, z, parent) {
+  const starShape = new THREE.Shape();
+  const outerRadius = 0.15;
+  const innerRadius = 0.06;
+  for (let i = 0; i < 10; i++) {
+    const radius = i % 2 === 0 ? outerRadius : innerRadius;
+    const angle = (i / 10) * Math.PI * 2;
+    const px = Math.cos(angle) * radius;
+    const py = Math.sin(angle) * radius;
+    if (i === 0) starShape.moveTo(px, py);
+    else starShape.lineTo(px, py);
+  }
+  starShape.closePath();
+
+  const starGeo = new THREE.ShapeGeometry(starShape);
+  const starMat = new THREE.MeshStandardMaterial({
+    color: 0xfbbf24,
+    metalness: 0.8,
+    roughness: 0.2
+  });
+  const star = new THREE.Mesh(starGeo, starMat);
+  star.rotation.x = -Math.PI / 2;
+  star.position.set(x, y, z);
+  parent.add(star);
+}
+
+function createPlayerBases(SIZE, TILE) {
+  const baseDefs = [
+    { name: 'red', cols: [1, 6], rows: [1, 6], color: PLAYER_COLORS[0].hex },
+    { name: 'yellow', cols: [10, 15], rows: [1, 6], color: PLAYER_COLORS[1].hex },
+    { name: 'green', cols: [1, 6], rows: [10, 15], color: PLAYER_COLORS[2].hex },
+    { name: 'blue', cols: [10, 15], rows: [10, 15], color: PLAYER_COLORS[3].hex }
+  ];
+
+  baseDefs.forEach((def, baseIndex) => {
+    const minC = def.cols[0], maxC = def.cols[1];
+    const minR = def.rows[0], maxR = def.rows[1];
+    const centerCol = (minC + maxC) / 2;
+    const centerRow = (minR + maxR) / 2;
+    const p = toPos(centerCol, centerRow);
+    const bw = (maxC - minC + 1) * TILE;
+    const bh = (maxR - minR + 1) * TILE;
+
+    // Plateforme
+    const geo = new THREE.BoxGeometry(bw * 0.92, 0.7, bh * 0.92);
+    const mat = new THREE.MeshStandardMaterial({
+      color: def.color,
       roughness: 0.4,
       metalness: 0.2
     });
-    const base = new THREE.Mesh(baseGeo, baseMat);
-    base.position.set(x, 0.3, z);
-    base.castShadow = true;
-    scene.add(base);
+    const platform = new THREE.Mesh(geo, mat);
+    platform.position.set(p.x, 0.35, p.z);
+    platform.castShadow = true;
+    scene.add(platform);
 
-    const baseLight = new THREE.PointLight(playerColor.hex, 0.3, 8);
-    baseLight.position.set(x, 1, z);
+    // Lumière
+    const baseLight = new THREE.PointLight(def.color, 0.3, 8);
+    baseLight.position.set(p.x, 1, p.z);
     scene.add(baseLight);
 
-    createPathTiles(x, z, angle, playerColor.hex);
-    createPawnsForPlayer(i, x, z, baseRadius, playerColor);
-  }
-}
+    // Spawns
+    const spawnOffsets = [
+      [-1, -1], [1, -1], [-1, 1], [1, 1]
+    ];
+    spawnOffsets.forEach((so, i) => {
+      const sx = p.x + so[0] * 1.2;
+      const sz = p.z + so[1] * 1.2;
 
-function createPathTiles(baseX, baseZ, angle, color) {
-  const pathLength = gameConfig.pathLength;
-  const tileSize = 0.8;
-  const spacing = 1;
-  
-  for (let j = 1; j <= pathLength; j++) {
-    const dist = 3.5 + j * spacing;
-    const tileX = baseX + Math.cos(angle) * dist;
-    const tileZ = baseZ + Math.sin(angle) * dist;
-    
-    const tileGeo = new THREE.BoxGeometry(tileSize, 0.15, tileSize);
-    const tileMat = new THREE.MeshStandardMaterial({
-      color: color,
-      metalness: 0.1,
-      roughness: 0.6,
-      opacity: 0.7,
-      transparent: true
-    });
-    const tile = new THREE.Mesh(tileGeo, tileMat);
-    tile.position.set(tileX, 0.08, tileZ);
-    tile.castShadow = true;
-    tile.receiveShadow = true;
-    scene.add(tile);
-  }
-}
+      const circleGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.08, 32);
+      const circleMat = new THREE.MeshStandardMaterial({
+        color: 0x347589,
+        metalness: 0.5,
+        roughness: 0.3
+      });
+      const mark = new THREE.Mesh(circleGeo, circleMat);
+      mark.position.set(sx, 0.4, sz);
+      mark.castShadow = true;
+      scene.add(mark);
 
-function createPawnsForPlayer(playerIndex, baseX, baseZ, baseRadius, playerColor) {
-  const pawnsPerPlayer = gameConfig.pawnsPerPlayer;
-  const angleStep = (Math.PI * 2) / pawnsPerPlayer;
-  
-  for (let i = 0; i < pawnsPerPlayer; i++) {
-    const angle = i * angleStep;
-    const spawnRadius = baseRadius * 0.6;
-    const sx = baseX + Math.cos(angle) * spawnRadius;
-    const sz = baseZ + Math.sin(angle) * spawnRadius;
-    
-    const circleGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.08, 32);
-    const circleMat = new THREE.MeshStandardMaterial({
-      color: 0x347589,
-      metalness: 0.5,
-      roughness: 0.3
+      const pawn = createPawn(def.color);
+      pawn.position.set(sx, 0.75, sz);
+      scene.add(pawn);
+      pawns.push({ 
+        mesh: pawn, 
+        playerIndex: baseIndex,
+        colorName: PLAYER_COLORS[baseIndex].name,
+        cssClass: PLAYER_COLORS[baseIndex].cssClass,
+        colorHex: def.color,
+        home: { x: sx, z: sz },
+        id: baseIndex * 4 + i,
+        inPlay: false,
+        animating: false
+      });
     });
-    const mark = new THREE.Mesh(circleGeo, circleMat);
-    mark.position.set(sx, 0.35, sz);
-    mark.castShadow = true;
-    scene.add(mark);
-
-    const pawn = createPawn(playerColor.hex);
-    pawn.position.set(sx, 0.7, sz);
-    scene.add(pawn);
-    
-    pawns.push({
-      mesh: pawn,
-      playerIndex: playerIndex,
-      colorHex: playerColor.hex,
-      colorName: playerColor.name,
-      cssClass: playerColor.cssClass,
-      home: { x: sx, z: sz },
-      id: playerIndex * pawnsPerPlayer + i,
-      inPlay: false
-    });
-  }
+  });
 }
 
 function createPawn(color) {
@@ -690,34 +735,38 @@ function createPawn(color) {
 }
 
 function createCenterDecoration() {
-  const holeDepth = 0.8;
-  const holeRadius = 1.2;
-  
-  const holeGeo = new THREE.CylinderGeometry(holeRadius, holeRadius * 0.9, holeDepth, 32);
-  const holeMat = new THREE.MeshStandardMaterial({
+  const triSize = 2.4;
+  const positions = [
+    { x: -1.2, z: -1.2, rot: Math.PI * 0.25, color: 0xef4444 },
+    { x: 1.2, z: -1.2, rot: Math.PI * -0.25, color: 0xfbbf24 },
+    { x: -1.2, z: 1.2, rot: Math.PI * 0.75, color: 0x22c55e },
+    { x: 1.2, z: 1.2, rot: Math.PI * -0.75, color: 0x3b82f6 }
+  ];
+
+  positions.forEach(pos => {
+    const triGeo = new THREE.CylinderGeometry(0, triSize, 0.15, 3);
+    const triMat = new THREE.MeshStandardMaterial({
+      color: pos.color,
+      metalness: 0.4,
+      roughness: 0.6
+    });
+    const tri = new THREE.Mesh(triGeo, triMat);
+    tri.position.set(pos.x, 0.08, pos.z);
+    tri.rotation.y = pos.rot;
+    tri.castShadow = true;
+    scene.add(tri);
+  });
+
+  const circGeo = new THREE.CylinderGeometry(0.7, 0.7, 0.12, 32);
+  const circMat = new THREE.MeshStandardMaterial({
     color: 0x000000,
-    metalness: 0.1,
-    roughness: 0.95,
-    emissive: 0x000000
+    metalness: 0.6,
+    roughness: 0.3
   });
-  const hole = new THREE.Mesh(holeGeo, holeMat);
-  hole.position.set(0, -holeDepth / 2 + 0.02, 0);
-  hole.receiveShadow = true;
-  scene.add(hole);
-
-  const shadowRingGeo = new THREE.CylinderGeometry(holeRadius + 0.1, holeRadius, 0.1, 32);
-  const shadowRingMat = new THREE.MeshStandardMaterial({
-    color: 0x0a0a0a,
-    metalness: 0.2,
-    roughness: 0.9
-  });
-  const shadowRing = new THREE.Mesh(shadowRingGeo, shadowRingMat);
-  shadowRing.position.set(0, 0.02, 0);
-  scene.add(shadowRing);
-
-  const rimLight = new THREE.PointLight(0x3b82f6, 0.2, 5);
-  rimLight.position.set(0, 0.1, 0);
-  scene.add(rimLight);
+  const circ = new THREE.Mesh(circGeo, circMat);
+  circ.position.set(0, 0.1, 0);
+  circ.castShadow = true;
+  scene.add(circ);
 }
 
 function animate() {
@@ -743,8 +792,8 @@ function setupEventListeners() {
   });
 
   document.getElementById('resetBtn').addEventListener('click', () => {
-    const cameraDistance = 15 + gameConfig.numPlayers * 2;
-    camera.position.set(0, cameraDistance * 1.2, cameraDistance);
+    const isMob = window.innerWidth < 768;
+    camera.position.set(0, isMob ? 32 : 28, isMob ? 25 : 22);
     controls.target.set(0, 0, 0);
   });
 
@@ -815,19 +864,13 @@ function movePawn(pawn) {
 }
 
 function getStartPosition(playerIndex) {
-  const angleStep = (Math.PI * 2) / gameConfig.numPlayers;
-  const angle = playerIndex * angleStep - Math.PI / 2;
-  const radius = 8 + gameConfig.pathLength * 0.5;
-  const baseDistance = radius * 0.7;
-  const startDist = 3.5;
-  
-  const baseX = Math.cos(angle) * baseDistance;
-  const baseZ = Math.sin(angle) * baseDistance;
-  
-  return {
-    x: baseX + Math.cos(angle) * startDist,
-    z: baseZ + Math.sin(angle) * startDist
-  };
+  const startPositions = [
+    { x: -6, z: -6.5 },     // red
+    { x: 6, z: -6.5 },      // yellow
+    { x: -6, z: 6.5 },      // green
+    { x: 6, z: 6.5 }        // blue
+  ];
+  return startPositions[playerIndex];
 }
 
 function animatePawnMovement(pawn, targetX, targetZ, callback) {
