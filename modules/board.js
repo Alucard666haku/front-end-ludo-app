@@ -316,11 +316,3 @@ export function getPathTiles() {
 export function getBoardSize() {
   return boardSize;
 }
-
-export function getPathTiles() {
-  return pathTiles;
-}
-
-export function getBoardSize() {
-  return boardSize;
-}
