@@ -70,9 +70,8 @@ function createPolygonBoard(scene, numPlayers) {
   const circuitRadius = boardRadius * 0.35;
   createMainCircuitPath(scene, circuitRadius, angleStep, numPlayers);
 
-  // Décorations centrales visibles: surface + anneau en survol
+  // Décoration centrale visible: surface
   createCentralSurface(scene, circuitRadius * 0.9);
-  createHoverOverlay(scene, circuitRadius * 1.05);
 
   // Bases des joueurs et chemins (les chemins radiaires rejoindront le circuit central)
   createPlayerBases(scene, boardRadius, circuitRadius, angleStep, numPlayers);
@@ -163,7 +162,8 @@ function createPathTilesForPlayer(scene, playerIndex, baseX, baseZ, angle, playe
       emissiveIntensity: 0.08
     });
     const tile = new THREE.Mesh(tileGeo, tileMat);
-    tile.position.set(tileX, 0.4, tileZ);
+    // raise radial path tiles above the central surface so they're visible
+    tile.position.set(tileX, 0.7, tileZ);
     tile.castShadow = true;
     tile.receiveShadow = true;
     scene.add(tile);
@@ -176,8 +176,8 @@ function createPathTilesForPlayer(scene, playerIndex, baseX, baseZ, angle, playe
     });
 
     // Marqueurs spéciaux: outermost near base, innermost near circuit
-    if (j === 1) createStartMarker(scene, tileX, 0.45, tileZ, playerColor.hex);
-    if (j === pathLength) createEndMarker(scene, tileX, 0.45, tileZ, playerColor.hex);
+    if (j === 1) createStartMarker(scene, tileX, 0.75, tileZ, playerColor.hex);
+    if (j === pathLength) createEndMarker(scene, tileX, 0.75, tileZ, playerColor.hex);
   }
 }
 
@@ -206,7 +206,8 @@ function createMainCircuitPath(scene, circuitRadius, angleStep, numPlayers) {
         emissiveIntensity: 0.05
       });
       const tile = new THREE.Mesh(tileGeo, tileMat);
-      tile.position.set(tileX, 0.4, tileZ);
+      // raise central circuit tiles above the central surface so they're visible
+      tile.position.set(tileX, 0.7, tileZ);
       tile.castShadow = true;
       tile.receiveShadow = true;
       scene.add(tile);
