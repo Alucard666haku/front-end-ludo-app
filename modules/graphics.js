@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'https://unpkg.com/three@0.152.2/examples/jsm/controls/OrbitControls.js';
 import { gameConfig } from './config.js';
-import { getBoardSize } from './board.js';
 import { animatePawns } from './pawns.js';
 
 let scene, camera, renderer, controls;
+let boardSize = 15; // Valeur par défaut
 
 export function initGraphics(container) {
   scene = new THREE.Scene();
@@ -12,7 +12,6 @@ export function initGraphics(container) {
   
   camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
   
-  const boardSize = getBoardSize();
   const cameraDistance = boardSize * 1.8;
   camera.position.set(0, cameraDistance * 1.2, cameraDistance);
 
@@ -30,7 +29,6 @@ export function initGraphics(container) {
 }
 
 function setupControls() {
-  const boardSize = getBoardSize();
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
@@ -45,8 +43,6 @@ function setupControls() {
 }
 
 function setupLights() {
-  const boardSize = getBoardSize();
-  
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
 
@@ -68,30 +64,28 @@ function setupLights() {
   scene.add(fillLight);
 }
 
-export function animateGraphics() {
-  requestAnimationFrame(animateGraphics);
-  const elapsed = performance.now() * 0.001;
-  
-  // Animation des pions
-  animatePawns(elapsed);
-  
-  controls.update();
-  renderer.render(scene, camera);
+export function animateGraphics(graphics) {
+  function animate() {
+    requestAnimationFrame(animate);
+    const elapsed = performance.now() * 0.001;
+    
+    // Animation des pions
+    animatePawns(elapsed);
+    
+    graphics.controls.update();
+    graphics.renderer.render(graphics.scene, graphics.camera);
+  }
+  animate();
 }
 
-export function handleResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+export function handleResize(graphics) {
+  graphics.camera.aspect = window.innerWidth / window.innerHeight;
+  graphics.camera.updateProjectionMatrix();
+  graphics.renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-export function resetCameraView() {
-  const boardSize = getBoardSize();
+export function resetCameraView(graphics) {
   const cameraDistance = boardSize * 1.8;
-  camera.position.set(0, cameraDistance * 1.2, cameraDistance);
-  controls.target.set(0, 0, 0);
-}
-
-export function getScene() {
-  return scene;
+  graphics.camera.position.set(0, cameraDistance * 1.2, cameraDistance);
+  graphics.controls.target.set(0, 0, 0);
 }

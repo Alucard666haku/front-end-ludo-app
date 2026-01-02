@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { gameConfig } from './config.js';
+import { createPawnsForPlayer } from './pawns.js';
 
 export let boardSize = 0;
 export let pathTiles = [];
@@ -107,6 +108,7 @@ function createPlayerBases(scene, radius, angleStep, numPlayers) {
     
     createBase(scene, baseX, baseZ, baseRadius, i);
     createPathTilesForPlayer(scene, i, baseX, baseZ, angle);
+    createPawnsForPlayer(scene, i, baseX, baseZ, baseRadius);
   }
 }
 

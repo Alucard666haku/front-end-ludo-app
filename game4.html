@@ -379,7 +379,6 @@
     import { setupConfigUI, gameConfig } from './modules/config.js';
     import { initGraphics, animateGraphics, handleResize, resetCameraView } from './modules/graphics.js';
     import { createBoard } from './modules/board.js';
-    import { createPawnsForPlayer } from './modules/pawns.js';
     import { initGameLogic, rollDice, updatePlayerTurn } from './modules/game.js';
 
     // Initialisation
@@ -390,37 +389,33 @@
 
     // Écouteurs d'événements globaux
     document.addEventListener('startGame', () => {
-    initGame();
+      initGame();
     });
 
     document.addEventListener('resetView', () => {
-    if (graphics) resetCameraView();
+      if (graphics) resetCameraView();
     });
 
     document.addEventListener('rollDice', () => {
-    rollDice();
+      rollDice();
     });
 
     function initGame() {
-    // Initialiser les graphiques
-    graphics = initGraphics(container);
-    
-    // Créer le plateau
-    createBoard(graphics.scene, gameConfig.numPlayers);
-    
-    // Créer les pions (à adapter selon votre logique de positionnement)
-    // Note: Vous devrez ajouter la logique pour positionner les bases
-    // et appeler createPawnsForPlayer pour chaque joueur
-    
-    // Initialiser la logique du jeu
-    initGameLogic();
-    
-    // Démarrer l'animation
-    animateGraphics();
-    
-    // Écouteur de redimensionnement
-    window.addEventListener('resize', handleResize);
+      // Initialiser les graphiques
+      graphics = initGraphics(container);
+      
+      // Créer le plateau (qui crée aussi les pions)
+      createBoard(graphics.scene, gameConfig.numPlayers);
+      
+      // Initialiser la logique du jeu
+      initGameLogic();
+      
+      // Démarrer l'animation
+      animateGraphics(graphics);
+      
+      // Écouteur de redimensionnement
+      window.addEventListener('resize', () => handleResize(graphics));
     }
-</script>
+  </script>
 </body>
 </html>
