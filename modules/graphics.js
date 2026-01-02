@@ -85,7 +85,8 @@ export function handleResize(graphics) {
 }
 
 export function resetCameraView(graphics) {
+  const g = graphics || { camera, controls };
   const cameraDistance = boardSize * 1.8;
-  graphics.camera.position.set(0, cameraDistance * 1.2, cameraDistance);
-  graphics.controls.target.set(0, 0, 0);
+  if (g.camera) g.camera.position.set(0, cameraDistance * 1.2, cameraDistance);
+  if (g.controls) g.controls.target.set(0, 0, 0);
 }
