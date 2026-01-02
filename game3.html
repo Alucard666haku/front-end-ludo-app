@@ -834,8 +834,8 @@ function createPathTilesForPlayer(def, minC, maxC, minR, maxR) {
   }
   
   // Créer les tuiles physiques pour le chemin
-  pathTiles.forEach(tile => {
-    const p = toPos(tile.col, tile.row);
+  pathTiles.forEach(tileData => {
+    const p = toPos(tileData.col, tileData.row);
     const tileSize = 0.8;
     const tileGeo = new THREE.BoxGeometry(tileSize, 0.15, tileSize);
     const tileMat = new THREE.MeshStandardMaterial({
@@ -845,11 +845,11 @@ function createPathTilesForPlayer(def, minC, maxC, minR, maxR) {
       opacity: 0.7,
       transparent: true
     });
-    const tile = new THREE.Mesh(tileGeo, tileMat);
-    tile.position.set(p.x, 0.08, p.z);
-    tile.castShadow = true;
-    tile.receiveShadow = true;
-    scene.add(tile);
+    const tileMesh = new THREE.Mesh(tileGeo, tileMat);
+    tileMesh.position.set(p.x, 0.08, p.z);
+    tileMesh.castShadow = true;
+    tileMesh.receiveShadow = true;
+    scene.add(tileMesh);
   });
 }
 
