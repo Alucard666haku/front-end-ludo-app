@@ -70,6 +70,10 @@ function createPolygonBoard(scene, numPlayers) {
   const circuitRadius = boardRadius * 0.35;
   createMainCircuitPath(scene, circuitRadius, angleStep, numPlayers);
 
+  // Décorations centrales visibles: surface + anneau en survol
+  createCentralSurface(scene, circuitRadius * 0.9);
+  createHoverOverlay(scene, circuitRadius * 1.05);
+
   // Bases des joueurs et chemins (les chemins radiaires rejoindront le circuit central)
   createPlayerBases(scene, boardRadius, circuitRadius, angleStep, numPlayers);
 }
@@ -365,4 +369,42 @@ export function getPathTiles() {
 
 export function getBoardSize() {
   return boardSize;
+}
+
+// Create a flat surface decoration at the center (slightly above the board)
+function createCentralSurface(scene, radius) {
+  const geo = new THREE.CircleGeometry(radius, 64);
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0x0b1228,
+    metalness: 0.1,
+    roughness: 0.6,
+    transparent: true,
+    opacity: 0.85
+  });
+  const surface = new THREE.Mesh(geo, mat);
+  surface.rotation.x = -Math.PI / 2;
+  // Place slightly above the board top so it's visible
+  surface.position.y = 0.12;
+  surface.receiveShadow = true;
+  scene.add(surface);
+}
+
+// Create a hovering overlay (ring or torus) above the center for visibility
+function createHoverOverlay(scene, radius) {
+  const ringGeo = new THREE.TorusGeometry(radius, 0.08, 16, 100);
+  const ringMat = new THREE.MeshStandardMaterial({
+    color: 0x60a5fa,
+    emissive: 0x60a5fa,
+    emissiveIntensity: 0.12,
+    metalness: 0.3,
+    roughness: 0.2,
+    transparent: true,
+    opacity: 0.95
+  });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  // Orient horizontally and hover above
+  ring.rotation.x = Math.PI / 2;
+  ring.position.y = 0.9;
+  ring.castShadow = false;
+  scene.add(ring);
 }
