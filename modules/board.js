@@ -137,7 +137,7 @@ function createBase(scene, x, z, radius, playerIndex, playerColor) {
   baseLight.position.set(x, 1, z);
   scene.add(baseLight);
 }
-*/
+
 function createPathTilesForPlayer(scene, playerIndex, baseX, baseZ, angle, playerColor, circuitRadius) {
   const pathLength = gameConfig.pathLength;
   const tileSize = 1.0;
@@ -198,7 +198,7 @@ function createPathTilesForPlayer(scene, playerIndex, baseX, baseZ, angle, playe
     isEntry: true
   });
 }
-/*
+
 // Create a central circuit that sits inside the polygon (middle of the table)
 function createMainCircuitPath(scene, circuitRadius, angleStep, numPlayers) {
   const tileSize = 0.85;
@@ -388,11 +388,11 @@ function getPlayerColors() {
     { name: 'Cyan', hex: 0x06b6d4, cssClass: 'color-cyan' }
   ];
 }
-
+*/
 export function getPathTiles() {
   return pathTiles;
 }
-
+/*
 export function getBoardSize() {
   return boardSize;
 }
