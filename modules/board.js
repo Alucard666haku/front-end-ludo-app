@@ -10,8 +10,8 @@ export function createBoard(scene, numPlayers) {
   
   // Sol
   createFloor(scene);
-  createPolygonBoard(scene, numPlayers);
-  createCenterDecoration(scene);
+  //createPolygonBoard(scene, numPlayers);
+  //createCenterDecoration(scene);
 }
 
 function createFloor(scene) {
@@ -27,7 +27,7 @@ function createFloor(scene) {
   floor.receiveShadow = true;
   scene.add(floor);
 }
-
+/*
 function createPolygonBoard(scene, numPlayers) {
   const boardRadius = boardSize * 0.8;
   const angleStep = (Math.PI * 2) / numPlayers;
@@ -420,4 +420,4 @@ function createCentralSurface(scene, radius) {
   scene.add(surface);
 }
 
-// (hover overlay removed - ring generation not used)
+*/
