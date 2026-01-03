@@ -27,7 +27,7 @@ function createFloor(scene) {
   floor.receiveShadow = true;
   scene.add(floor);
 }
-/*
+
 function createPolygonBoard(scene, numPlayers) {
   const boardRadius = boardSize * 0.8;
   const angleStep = (Math.PI * 2) / numPlayers;
@@ -388,11 +388,11 @@ function getPlayerColors() {
     { name: 'Cyan', hex: 0x06b6d4, cssClass: 'color-cyan' }
   ];
 }
-*/
+
 export function getPathTiles() {
   return pathTiles;
 }
-/*
+
 export function getBoardSize() {
   return boardSize;
 }
@@ -420,4 +420,3 @@ function createCentralSurface(scene, radius) {
   scene.add(surface);
 }
 
-*/
